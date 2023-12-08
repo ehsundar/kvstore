@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package kvstore;
+
+option go_package = "github.com/ehsundar/kvstore/protobuf/kvstore";
+
+import "google/protobuf/descriptor.proto";
+
+
+message KVStoreKeyOptions {
+  int32 database = 1;
+  string name = 2;
+
+  message StaticKeyMode {
+    string key = 1;
+  }
+  oneof mode {
+    StaticKeyMode static_key = 3;
+  }
+}
+
+message KVStoreValueOptions {
+  string name = 2;
+}
+
+extend google.protobuf.MessageOptions {
+  KVStoreKeyOptions key_options = 1000;
+  KVStoreValueOptions value_options = 1001;
+}

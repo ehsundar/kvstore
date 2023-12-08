@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package example;
+
+option go_package = "github.com/ehsundar/kvstore/example";
+
+import "google/protobuf/descriptor.proto";
+import "protobuf/kvstore/options.proto";
+
+
+message StaticKey {
+  option (kvstore.key_options) = {
+    database: 0
+    name: "feature-x"
+    static_key: {key: "feature_x_enabled"}
+  };
+}
+
+message StaticPrimitiveBoolValue {
+  option (kvstore.value_options) = {
+    name: "feature-x"
+  };
+
+  bool value = 1;
+}
