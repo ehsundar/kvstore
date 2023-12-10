@@ -2,11 +2,15 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
 	kvstoreProto "github.com/ehsundar/kvstore/protobuf/kvstore"
 )
+
+//go:embed kvstore.tmpl
+var rawTemplate string
 
 type kvstoreTemplateContext struct {
 	PackageName string
@@ -36,7 +40,7 @@ type valueSpecs struct {
 
 func Render(templateContext kvstoreTemplateContext) (string, error) {
 	tmpl := template.Must(
-		template.New("base").Funcs(sprig.FuncMap()).ParseGlob("*.tmpl"),
+		template.New("base").Funcs(sprig.FuncMap()).Parse(rawTemplate),
 	)
 
 	builder := &bytes.Buffer{}

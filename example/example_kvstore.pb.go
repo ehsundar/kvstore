@@ -11,13 +11,14 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
+// generated code for FeatureX
 // storage interface
 
 type FeatureXKVStore interface {
-	Get(ctx context.Context, key *StaticKey, opts ...FeatureXCallOption) (*StaticPrimitiveBoolValue, error)
-	Set(ctx context.Context, key *StaticKey,
-		value *StaticPrimitiveBoolValue, opts ...FeatureXCallOption) (*StaticPrimitiveBoolValue, error)
-	Delete(ctx context.Context, key *StaticKey) error
+	Get(context.Context, *StaticKey, ...FeatureXCallOption) (*StaticPrimitiveBoolValue, error)
+	Set(context.Context, *StaticKey,
+		*StaticPrimitiveBoolValue, ...FeatureXCallOption) (*StaticPrimitiveBoolValue, error)
+	Delete(context.Context, *StaticKey) error
 }
 
 type featureXCallOptionContext struct{}
@@ -122,6 +123,7 @@ func (s *featureXStorage) Delete(ctx context.Context, key *StaticKey) error {
 // message marshallers
 
 func (msg *StaticKey) marshal() (string, error) {
+	// TODO
 	v := fmt.Sprintf("%s:%s", "feature-x", "feature_x_enable")
 
 	return v, nil
