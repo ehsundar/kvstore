@@ -12,7 +12,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-{{range $codeSafeName, $pairSpecs := .Pairs}}
+{{range $_, $pairSpecs := .Pairs}}
+{{$codeSafeName := $pairSpecs.CodeSafeName}}
 // generated code for {{$codeSafeName}}
 // storage interface
 

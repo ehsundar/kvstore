@@ -2,10 +2,15 @@ package main
 
 import (
 	"fmt"
+	"github.com/ehsundar/kvstore/internal/codesafe"
+	"github.com/ehsundar/kvstore/internal/optparse"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
 func main() {
+	setupLogger()
+	log.Infof("started protoc-gen-kvstore plugin")
 
 	protogen.Options{}.Run(func(gen *protogen.Plugin) error {
 		for _, f := range gen.Files {
@@ -25,16 +30,23 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 		Pairs:       map[string]storagePair{},
 	}
 
-	templateCtx.Pairs["FeatureX"] = storagePair{
-		CodeSafeName: "FeatureX",
-		KeySpecs: keySpecs{
-			Opts:        nil,
-			MessageName: "StaticKey",
-		},
-		ValueSpecs: valueSpecs{
-			Opts:        nil,
-			MessageName: "StaticPrimitiveBoolValue",
-		},
+	pairs, err := optparse.ExtractPairs(file.Messages)
+	if err != nil {
+		panic(err)
+	}
+
+	for name, pair := range pairs {
+		templateCtx.Pairs[name] = storagePair{
+			CodeSafeName: codesafe.ToCamelCase(name),
+			KeySpecs: keySpecs{
+				Opts:        pair.KeyOptions,
+				MessageName: string(pair.KeyDesc.Name()),
+			},
+			ValueSpecs: valueSpecs{
+				Opts:        pair.ValueOptions,
+				MessageName: string(pair.ValueDesc.Name()),
+			},
+		}
 	}
 
 	value, err := Render(templateCtx)
