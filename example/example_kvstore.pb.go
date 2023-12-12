@@ -4,6 +4,7 @@ package example
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -90,10 +91,10 @@ func (s *featureXStorage) Set(ctx context.Context, key *StaticKey,
 		Mode:     "",
 		TTL:      0,
 		ExpireAt: time.Time{},
-		Get:      false,
+		Get:      true,
 		KeepTTL:  false,
 	}).Result()
-	if err != nil {
+	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, err
 	}
 
