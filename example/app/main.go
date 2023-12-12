@@ -46,4 +46,30 @@ func main() {
 	if err := featureX.Del(ctx, &example.StaticKey{}); err != nil {
 		panic(err)
 	}
+
+	rateLimit := example.NewRateLimitStore(r)
+
+	_, err = rateLimit.Set(ctx, &example.DynamicKey{
+		RpcName:  "GetUser",
+		CallerId: "caller-one",
+		// every ten seconds is a separate bucket
+		Bucket: 1702411920,
+	}, &example.RateLimitCount{
+		Count: 10,
+		Limit: 100,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	rateLimitValue, err := rateLimit.Get(ctx, &example.DynamicKey{
+		RpcName:  "GetUser",
+		CallerId: "caller-one",
+		Bucket:   1702411920,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%d/%d", rateLimitValue.Count, rateLimitValue.Limit)
 }
