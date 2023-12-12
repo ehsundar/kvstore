@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 
@@ -31,7 +32,9 @@ func main() {
 		Items: &example.ValueForStaticKey_NestedItems{
 			Items: []int32{1, 2, 3},
 		},
-	})
+	},
+		example.WithFeatureXTTL(10*time.Second),
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -57,7 +60,9 @@ func main() {
 	}, &example.RateLimitCount{
 		Count: 10,
 		Limit: 100,
-	})
+	},
+		example.WithRateLimitTTL(10*time.Second),
+	)
 	if err != nil {
 		panic(err)
 	}

@@ -22,9 +22,65 @@ type FeatureXKVStore interface {
 	Del(context.Context, *StaticKey) error
 }
 
-type featureXCallOptionContext struct{}
+type featureXCallOptionContext struct {
+	// common
+	ttl  time.Duration
+	exAt time.Time
+
+	// set
+	mode    string
+	get     bool
+	keepTTL bool
+
+	// get
+	getDel bool
+}
 
 type FeatureXCallOption func(o *featureXCallOptionContext)
+
+func WithFeatureXModeNX() FeatureXCallOption {
+	return func(o *featureXCallOptionContext) {
+		o.mode = "NX"
+	}
+}
+
+func WithFeatureXModeXX() FeatureXCallOption {
+	return func(o *featureXCallOptionContext) {
+		o.mode = "XX"
+	}
+}
+
+func WithFeatureXGetDisabled() FeatureXCallOption {
+	return func(o *featureXCallOptionContext) {
+		o.get = false
+	}
+}
+
+func WithFeatureXTTL(ttl time.Duration) FeatureXCallOption {
+	return func(o *featureXCallOptionContext) {
+		o.ttl = ttl
+		o.exAt = time.Time{}
+		o.keepTTL = false
+		o.getDel = false
+	}
+}
+
+func WithFeatureXExpireAt(eat time.Time) FeatureXCallOption {
+	return func(o *featureXCallOptionContext) {
+		o.exAt = eat
+		o.ttl = 0
+		o.keepTTL = false
+		o.getDel = false
+	}
+}
+
+func WithFeatureXGetDel() FeatureXCallOption {
+	return func(o *featureXCallOptionContext) {
+		o.getDel = true
+		o.ttl = 0
+		o.exAt = time.Time{}
+	}
+}
 
 // storage construction
 
@@ -55,6 +111,11 @@ type featureXStorage struct {
 func (s *featureXStorage) Get(
 	ctx context.Context, key *StaticKey, opts ...FeatureXCallOption) (*ValueForStaticKey, error) {
 
+	o := featureXCallOptionContext{}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
 	k, err := key.marshal()
 	if err != nil {
 		return nil, err
@@ -77,6 +138,14 @@ func (s *featureXStorage) Get(
 func (s *featureXStorage) Set(ctx context.Context, key *StaticKey,
 	value *ValueForStaticKey, opts ...FeatureXCallOption) (*ValueForStaticKey, error) {
 
+	o := featureXCallOptionContext{
+		get:     true,
+		keepTTL: true,
+	}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
 	k, err := key.marshal()
 	if err != nil {
 		return nil, err
@@ -88,11 +157,11 @@ func (s *featureXStorage) Set(ctx context.Context, key *StaticKey,
 	}
 
 	v, err := s.r.SetArgs(ctx, k, mv, redis.SetArgs{
-		Mode:     "",
-		TTL:      0,
-		ExpireAt: time.Time{},
-		Get:      true,
-		KeepTTL:  false,
+		Mode:     o.mode,
+		TTL:      o.ttl,
+		ExpireAt: o.exAt,
+		Get:      o.get,
+		KeepTTL:  o.keepTTL,
 	}).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, err
@@ -153,9 +222,65 @@ type RateLimitKVStore interface {
 	Del(context.Context, *DynamicKey) error
 }
 
-type rateLimitCallOptionContext struct{}
+type rateLimitCallOptionContext struct {
+	// common
+	ttl  time.Duration
+	exAt time.Time
+
+	// set
+	mode    string
+	get     bool
+	keepTTL bool
+
+	// get
+	getDel bool
+}
 
 type RateLimitCallOption func(o *rateLimitCallOptionContext)
+
+func WithRateLimitModeNX() RateLimitCallOption {
+	return func(o *rateLimitCallOptionContext) {
+		o.mode = "NX"
+	}
+}
+
+func WithRateLimitModeXX() RateLimitCallOption {
+	return func(o *rateLimitCallOptionContext) {
+		o.mode = "XX"
+	}
+}
+
+func WithRateLimitGetDisabled() RateLimitCallOption {
+	return func(o *rateLimitCallOptionContext) {
+		o.get = false
+	}
+}
+
+func WithRateLimitTTL(ttl time.Duration) RateLimitCallOption {
+	return func(o *rateLimitCallOptionContext) {
+		o.ttl = ttl
+		o.exAt = time.Time{}
+		o.keepTTL = false
+		o.getDel = false
+	}
+}
+
+func WithRateLimitExpireAt(eat time.Time) RateLimitCallOption {
+	return func(o *rateLimitCallOptionContext) {
+		o.exAt = eat
+		o.ttl = 0
+		o.keepTTL = false
+		o.getDel = false
+	}
+}
+
+func WithRateLimitGetDel() RateLimitCallOption {
+	return func(o *rateLimitCallOptionContext) {
+		o.getDel = true
+		o.ttl = 0
+		o.exAt = time.Time{}
+	}
+}
 
 // storage construction
 
@@ -186,6 +311,11 @@ type rateLimitStorage struct {
 func (s *rateLimitStorage) Get(
 	ctx context.Context, key *DynamicKey, opts ...RateLimitCallOption) (*RateLimitCount, error) {
 
+	o := rateLimitCallOptionContext{}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
 	k, err := key.marshal()
 	if err != nil {
 		return nil, err
@@ -208,6 +338,14 @@ func (s *rateLimitStorage) Get(
 func (s *rateLimitStorage) Set(ctx context.Context, key *DynamicKey,
 	value *RateLimitCount, opts ...RateLimitCallOption) (*RateLimitCount, error) {
 
+	o := rateLimitCallOptionContext{
+		get:     true,
+		keepTTL: true,
+	}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
 	k, err := key.marshal()
 	if err != nil {
 		return nil, err
@@ -219,11 +357,11 @@ func (s *rateLimitStorage) Set(ctx context.Context, key *DynamicKey,
 	}
 
 	v, err := s.r.SetArgs(ctx, k, mv, redis.SetArgs{
-		Mode:     "",
-		TTL:      0,
-		ExpireAt: time.Time{},
-		Get:      true,
-		KeepTTL:  false,
+		Mode:     o.mode,
+		TTL:      o.ttl,
+		ExpireAt: o.exAt,
+		Get:      o.get,
+		KeepTTL:  o.keepTTL,
 	}).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, err

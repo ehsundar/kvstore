@@ -25,9 +25,65 @@ type {{$codeSafeName}}KVStore interface {
 	Del(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}) error
 }
 
-type {{$codeSafeName|untitle}}CallOptionContext struct{}
+type {{$codeSafeName|untitle}}CallOptionContext struct{
+	// common
+	ttl  time.Duration
+	exAt time.Time
+
+	// set
+	mode    string
+	get     bool
+	keepTTL bool
+
+	// get
+	getDel bool
+}
 
 type {{$codeSafeName}}CallOption func(o *{{$codeSafeName|untitle}}CallOptionContext)
+
+func With{{$codeSafeName}}ModeNX() {{$codeSafeName}}CallOption {
+	return func(o *{{$codeSafeName|untitle}}CallOptionContext) {
+		o.mode = "NX"
+	}
+}
+
+func With{{$codeSafeName}}ModeXX() {{$codeSafeName}}CallOption {
+	return func(o *{{$codeSafeName|untitle}}CallOptionContext) {
+		o.mode = "XX"
+	}
+}
+
+func With{{$codeSafeName}}GetDisabled() {{$codeSafeName}}CallOption {
+	return func(o *{{$codeSafeName|untitle}}CallOptionContext) {
+		o.get = false
+	}
+}
+
+func With{{$codeSafeName}}TTL(ttl time.Duration) {{$codeSafeName}}CallOption {
+	return func(o *{{$codeSafeName|untitle}}CallOptionContext) {
+		o.ttl = ttl
+		o.exAt = time.Time{}
+		o.keepTTL = false
+		o.getDel = false
+	}
+}
+
+func With{{$codeSafeName}}ExpireAt(eat time.Time) {{$codeSafeName}}CallOption {
+	return func(o *{{$codeSafeName|untitle}}CallOptionContext) {
+		o.exAt = eat
+		o.ttl = 0
+		o.keepTTL = false
+		o.getDel = false
+	}
+}
+
+func With{{$codeSafeName}}GetDel() {{$codeSafeName}}CallOption {
+	return func(o *{{$codeSafeName|untitle}}CallOptionContext) {
+		o.getDel = true
+		o.ttl = 0
+		o.exAt = time.Time{}
+	}
+}
 
 // storage construction
 
@@ -58,6 +114,11 @@ type {{$codeSafeName|untitle}}Storage struct {
 func (s *{{$codeSafeName|untitle}}Storage) Get(
 	ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}}, opts ...{{$codeSafeName}}CallOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error) {
 
+	o := {{$codeSafeName|untitle}}CallOptionContext{}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
 	k, err := key.marshal()
 	if err != nil {
 		return nil, err
@@ -80,6 +141,14 @@ func (s *{{$codeSafeName|untitle}}Storage) Get(
 func (s *{{$codeSafeName|untitle}}Storage) Set(ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}},
 	value *{{$pairSpecs.ValueSpecs.MessageName}}, opts ...{{$codeSafeName}}CallOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error) {
 
+	o := {{$codeSafeName|untitle}}CallOptionContext{
+		get:     true,
+		keepTTL: true,
+	}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
 	k, err := key.marshal()
 	if err != nil {
 		return nil, err
@@ -91,11 +160,11 @@ func (s *{{$codeSafeName|untitle}}Storage) Set(ctx context.Context, key *{{$pair
 	}
 
 	v, err := s.r.SetArgs(ctx, k, mv, redis.SetArgs{
-		Mode:     "",
-		TTL:      0,
-		ExpireAt: time.Time{},
-		Get:      true,
-		KeepTTL:  false,
+		Mode:     o.mode,
+		TTL:      o.ttl,
+		ExpireAt: o.exAt,
+		Get:      o.get,
+		KeepTTL:  o.keepTTL,
 	}).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, err
