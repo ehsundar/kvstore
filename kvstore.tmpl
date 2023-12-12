@@ -87,7 +87,7 @@ func With{{$codeSafeName}}GetDel() {{$codeSafeName}}CallOption {
 
 // storage construction
 
-func New{{$codeSafeName}}Store(r *redis.Client, opts ...{{$codeSafeName|untitle}}Option) {{$codeSafeName}}KVStore {
+func New{{$codeSafeName}}Store(r redis.Cmdable, opts ...{{$codeSafeName|untitle}}Option) {{$codeSafeName}}KVStore {
 	oc := {{$codeSafeName|untitle}}OptionContext{}
 
 	for _, opt := range opts {
@@ -107,7 +107,7 @@ type {{$codeSafeName|untitle}}Option func(o *{{$codeSafeName|untitle}}OptionCont
 // storage implementation
 
 type {{$codeSafeName|untitle}}Storage struct {
-	r    *redis.Client
+	r    redis.Cmdable
 	opts {{$codeSafeName|untitle}}OptionContext
 }
 

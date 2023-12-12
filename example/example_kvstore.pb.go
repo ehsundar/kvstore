@@ -84,7 +84,7 @@ func WithFeatureXGetDel() FeatureXCallOption {
 
 // storage construction
 
-func NewFeatureXStore(r *redis.Client, opts ...featureXOption) FeatureXKVStore {
+func NewFeatureXStore(r redis.Cmdable, opts ...featureXOption) FeatureXKVStore {
 	oc := featureXOptionContext{}
 
 	for _, opt := range opts {
@@ -104,7 +104,7 @@ type featureXOption func(o *featureXOptionContext)
 // storage implementation
 
 type featureXStorage struct {
-	r    *redis.Client
+	r    redis.Cmdable
 	opts featureXOptionContext
 }
 
@@ -284,7 +284,7 @@ func WithRateLimitGetDel() RateLimitCallOption {
 
 // storage construction
 
-func NewRateLimitStore(r *redis.Client, opts ...rateLimitOption) RateLimitKVStore {
+func NewRateLimitStore(r redis.Cmdable, opts ...rateLimitOption) RateLimitKVStore {
 	oc := rateLimitOptionContext{}
 
 	for _, opt := range opts {
@@ -304,7 +304,7 @@ type rateLimitOption func(o *rateLimitOptionContext)
 // storage implementation
 
 type rateLimitStorage struct {
-	r    *redis.Client
+	r    redis.Cmdable
 	opts rateLimitOptionContext
 }
 
