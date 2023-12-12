@@ -111,6 +111,8 @@ type featureXStorage struct {
 func (s *featureXStorage) Get(
 	ctx context.Context, key *StaticKey, opts ...FeatureXCallOption) (*ValueForStaticKey, error) {
 
+	var err error
+
 	o := featureXCallOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
@@ -121,7 +123,19 @@ func (s *featureXStorage) Get(
 		return nil, err
 	}
 
-	v, err := s.r.Get(ctx, k).Result()
+	var v string
+	switch {
+	case o.getDel:
+		v, err = s.r.GetDel(ctx, k).Result()
+	case o.ttl != 0:
+		v, err = s.r.GetEx(ctx, k, o.ttl).Result()
+	case !o.exAt.IsZero():
+		// TODO: PR to go-redis for exAt
+		err = errors.New("exat is not supported by go-redis")
+	default:
+		v, err = s.r.Get(ctx, k).Result()
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -311,6 +325,8 @@ type rateLimitStorage struct {
 func (s *rateLimitStorage) Get(
 	ctx context.Context, key *DynamicKey, opts ...RateLimitCallOption) (*RateLimitCount, error) {
 
+	var err error
+
 	o := rateLimitCallOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
@@ -321,7 +337,19 @@ func (s *rateLimitStorage) Get(
 		return nil, err
 	}
 
-	v, err := s.r.Get(ctx, k).Result()
+	var v string
+	switch {
+	case o.getDel:
+		v, err = s.r.GetDel(ctx, k).Result()
+	case o.ttl != 0:
+		v, err = s.r.GetEx(ctx, k, o.ttl).Result()
+	case !o.exAt.IsZero():
+		// TODO: PR to go-redis for exAt
+		err = errors.New("exat is not supported by go-redis")
+	default:
+		v, err = s.r.Get(ctx, k).Result()
+	}
+
 	if err != nil {
 		return nil, err
 	}
