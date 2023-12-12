@@ -8,21 +8,20 @@ import "google/protobuf/descriptor.proto";
 
 
 message KVStoreKeyOptions {
-  int32 database = 1;
-  string name = 2;
+  string name = 1;
 
   message StaticKeyMode {
     string key = 1;
   }
   message DynamicKeyMode {}
   oneof mode {
-    StaticKeyMode static_key = 3;
-    DynamicKeyMode dynamic_key = 4;
+    StaticKeyMode static_key = 2;
+    DynamicKeyMode dynamic_key = 3;
   }
 }
 
 message KVStoreValueOptions {
-  string name = 2;
+  string name = 1;
 }
 
 extend google.protobuf.MessageOptions {
