@@ -16,10 +16,16 @@ message StaticKey {
   };
 }
 
-message StaticPrimitiveBoolValue {
+message ValueForStaticKey {
   option (kvstore.value_options) = {
     name: "feature-x"
   };
 
   bool value = 1;
+  repeated string phones = 2;
+
+  message NestedItems {
+    repeated int32 items = 1;
+  }
+  NestedItems items = 3;
 }

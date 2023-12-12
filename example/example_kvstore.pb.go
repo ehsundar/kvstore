@@ -16,9 +16,9 @@ import (
 // storage interface
 
 type FeatureXKVStore interface {
-	Get(context.Context, *StaticKey, ...FeatureXCallOption) (*StaticPrimitiveBoolValue, error)
+	Get(context.Context, *StaticKey, ...FeatureXCallOption) (*ValueForStaticKey, error)
 	Set(context.Context, *StaticKey,
-		*StaticPrimitiveBoolValue, ...FeatureXCallOption) (*StaticPrimitiveBoolValue, error)
+		*ValueForStaticKey, ...FeatureXCallOption) (*ValueForStaticKey, error)
 	Del(context.Context, *StaticKey) error
 }
 
@@ -53,7 +53,7 @@ type featureXStorage struct {
 }
 
 func (s *featureXStorage) Get(
-	ctx context.Context, key *StaticKey, opts ...FeatureXCallOption) (*StaticPrimitiveBoolValue, error) {
+	ctx context.Context, key *StaticKey, opts ...FeatureXCallOption) (*ValueForStaticKey, error) {
 
 	k, err := key.marshal()
 	if err != nil {
@@ -65,7 +65,7 @@ func (s *featureXStorage) Get(
 		return nil, err
 	}
 
-	msg := &StaticPrimitiveBoolValue{}
+	msg := &ValueForStaticKey{}
 	err = msg.unmarshal(v)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (s *featureXStorage) Get(
 }
 
 func (s *featureXStorage) Set(ctx context.Context, key *StaticKey,
-	value *StaticPrimitiveBoolValue, opts ...FeatureXCallOption) (*StaticPrimitiveBoolValue, error) {
+	value *ValueForStaticKey, opts ...FeatureXCallOption) (*ValueForStaticKey, error) {
 
 	k, err := key.marshal()
 	if err != nil {
@@ -99,7 +99,7 @@ func (s *featureXStorage) Set(ctx context.Context, key *StaticKey,
 	}
 
 	if v != "" {
-		msg := &StaticPrimitiveBoolValue{}
+		msg := &ValueForStaticKey{}
 		err = msg.unmarshal(v)
 		if err != nil {
 			return nil, err
@@ -130,7 +130,7 @@ func (msg *StaticKey) marshal() (string, error) {
 	return v, nil
 }
 
-func (msg *StaticPrimitiveBoolValue) marshal() (string, error) {
+func (msg *ValueForStaticKey) marshal() (string, error) {
 	v, err := protojson.MarshalOptions{}.Marshal(msg)
 	if err != nil {
 		return "", err
@@ -139,6 +139,6 @@ func (msg *StaticPrimitiveBoolValue) marshal() (string, error) {
 	return string(v), nil
 }
 
-func (msg *StaticPrimitiveBoolValue) unmarshal(value string) error {
+func (msg *ValueForStaticKey) unmarshal(value string) error {
 	return protojson.UnmarshalOptions{}.Unmarshal([]byte(value), msg)
 }

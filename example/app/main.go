@@ -25,7 +25,13 @@ func main() {
 
 	featureX := example.NewFeatureXStore(r)
 
-	_, err = featureX.Set(ctx, &example.StaticKey{}, &example.StaticPrimitiveBoolValue{Value: true})
+	_, err = featureX.Set(ctx, &example.StaticKey{}, &example.ValueForStaticKey{
+		Value:  true,
+		Phones: []string{"123", "456"},
+		Items: &example.ValueForStaticKey_NestedItems{
+			Items: []int32{1, 2, 3},
+		},
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -35,7 +41,7 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("%v\n", v.Value)
+	fmt.Printf("%+v\n", v)
 
 	if err := featureX.Del(ctx, &example.StaticKey{}); err != nil {
 		panic(err)
