@@ -5,6 +5,7 @@ package example
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -124,7 +125,7 @@ func (s *featureXStorage) Del(ctx context.Context, key *StaticKey) error {
 
 func (msg *StaticKey) marshal() (string, error) {
 
-	v := "feature-x:feature_x_enabled"
+	v := fmt.Sprintf("feature-x:feature_x_enabled")
 
 	return v, nil
 }

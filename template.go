@@ -3,7 +3,10 @@ package main
 import (
 	"bytes"
 	_ "embed"
+	"fmt"
 	"github.com/ehsundar/kvstore/internal/keymode"
+	"github.com/samber/lo"
+	"strings"
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
@@ -12,6 +15,16 @@ import (
 
 //go:embed kvstore.tmpl
 var rawTemplate string
+
+var funcs = template.FuncMap{
+	"funcCallArgs": func(varName string, v interface{}) string {
+		vv := v.([]string)
+		vv = lo.Map(vv, func(item string, _ int) string {
+			return fmt.Sprintf("%s.%s", varName, item)
+		})
+		return strings.Join(vv, ", ")
+	},
+}
 
 type kvstoreTemplateContext struct {
 	PackageName string
@@ -42,7 +55,7 @@ type valueSpecs struct {
 
 func Render(templateContext kvstoreTemplateContext) (string, error) {
 	tmpl := template.Must(
-		template.New("base").Funcs(sprig.FuncMap()).Parse(rawTemplate),
+		template.New("base").Funcs(sprig.FuncMap()).Funcs(funcs).Parse(rawTemplate),
 	)
 
 	builder := &bytes.Buffer{}

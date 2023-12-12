@@ -6,6 +6,7 @@ package example
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -126,12 +127,9 @@ func (s *featureXStorage) Del(ctx context.Context, key *{{$pairSpecs.KeySpecs.Me
 // message marshallers
 
 func (msg *{{$pairSpecs.KeySpecs.MessageName}}) marshal() (string, error) {
-	{{if $pairSpecs.KeySpecs.KeyFormat.VarNames}}
-    // TODO
-	v := fmt.Sprintf({{$pairSpecs.KeySpecs.KeyFormat.Format}}, "feature-x", "feature_x_enable")
-	{{else}}
-	v := "{{$pairSpecs.KeySpecs.KeyFormat.Format}}"
-	{{end}}
+	{{$keyfmt := $pairSpecs.KeySpecs.KeyFormat}}
+	v := fmt.Sprintf("{{$keyfmt.Format}}"{{if $keyfmt.VarNames}}, {{end}}{{$keyfmt.VarNames|funcCallArgs "msg"}})
+
 	return v, nil
 }
 
