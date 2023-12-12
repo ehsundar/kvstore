@@ -10,7 +10,7 @@ import (
 
 func main() {
 	setupLogger()
-	log.Infof("started protoc-gen-kvstore plugin")
+	log.Infof("started protoc-gen-go-kvstore plugin")
 
 	protogen.Options{}.Run(func(gen *protogen.Plugin) error {
 		for _, f := range gen.Files {
