@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/ehsundar/kvstore/internal/codesafe"
+	"github.com/ehsundar/kvstore/internal/keymode"
 	"github.com/ehsundar/kvstore/internal/optparse"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -36,11 +37,17 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 	}
 
 	for name, pair := range pairs {
+		keyFormat, err := keymode.GetKeyFormat(pair.KeyOptions)
+		if err != nil {
+			panic(err)
+		}
+
 		templateCtx.Pairs[name] = storagePair{
 			CodeSafeName: codesafe.ToCamelCase(name),
 			KeySpecs: keySpecs{
 				Opts:        pair.KeyOptions,
 				MessageName: string(pair.KeyDesc.Name()),
+				KeyFormat:   keyFormat,
 			},
 			ValueSpecs: valueSpecs{
 				Opts:        pair.ValueOptions,

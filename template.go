@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	_ "embed"
+	"github.com/ehsundar/kvstore/internal/keymode"
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
@@ -30,6 +31,7 @@ type keySpecs struct {
 	Opts *kvstoreProto.KVStoreKeyOptions
 
 	MessageName string
+	KeyFormat   keymode.KeyFormat
 }
 
 type valueSpecs struct {
