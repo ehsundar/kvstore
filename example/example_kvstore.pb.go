@@ -142,3 +142,134 @@ func (msg *ValueForStaticKey) marshal() (string, error) {
 func (msg *ValueForStaticKey) unmarshal(value string) error {
 	return protojson.UnmarshalOptions{}.Unmarshal([]byte(value), msg)
 }
+
+// generated code for RateLimit
+// storage interface
+
+type RateLimitKVStore interface {
+	Get(context.Context, *DynamicKey, ...RateLimitCallOption) (*RateLimitCount, error)
+	Set(context.Context, *DynamicKey,
+		*RateLimitCount, ...RateLimitCallOption) (*RateLimitCount, error)
+	Del(context.Context, *DynamicKey) error
+}
+
+type rateLimitCallOptionContext struct{}
+
+type RateLimitCallOption func(o *rateLimitCallOptionContext)
+
+// storage construction
+
+func NewRateLimitStore(r *redis.Client, opts ...rateLimitOption) RateLimitKVStore {
+	oc := rateLimitOptionContext{}
+
+	for _, opt := range opts {
+		opt(&oc)
+	}
+
+	return &rateLimitStorage{
+		r:    r,
+		opts: oc,
+	}
+}
+
+type rateLimitOptionContext struct{}
+
+type rateLimitOption func(o *rateLimitOptionContext)
+
+// storage implementation
+
+type rateLimitStorage struct {
+	r    *redis.Client
+	opts rateLimitOptionContext
+}
+
+func (s *rateLimitStorage) Get(
+	ctx context.Context, key *DynamicKey, opts ...RateLimitCallOption) (*RateLimitCount, error) {
+
+	k, err := key.marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	v, err := s.r.Get(ctx, k).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	msg := &RateLimitCount{}
+	err = msg.unmarshal(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return msg, nil
+}
+
+func (s *rateLimitStorage) Set(ctx context.Context, key *DynamicKey,
+	value *RateLimitCount, opts ...RateLimitCallOption) (*RateLimitCount, error) {
+
+	k, err := key.marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	mv, err := value.marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	v, err := s.r.SetArgs(ctx, k, mv, redis.SetArgs{
+		Mode:     "",
+		TTL:      0,
+		ExpireAt: time.Time{},
+		Get:      true,
+		KeepTTL:  false,
+	}).Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return nil, err
+	}
+
+	if v != "" {
+		msg := &RateLimitCount{}
+		err = msg.unmarshal(v)
+		if err != nil {
+			return nil, err
+		}
+		return msg, nil
+	}
+
+	return nil, nil
+}
+
+func (s *rateLimitStorage) Del(ctx context.Context, key *DynamicKey) error {
+
+	k, err := key.marshal()
+	if err != nil {
+		return err
+	}
+
+	_, err = s.r.Del(ctx, k).Result()
+	return err
+}
+
+// message marshallers
+
+func (msg *DynamicKey) marshal() (string, error) {
+
+	v := fmt.Sprintf("rate-limit:%v:%v:%v", msg.RpcName, msg.CallerId, msg.Bucket)
+
+	return v, nil
+}
+
+func (msg *RateLimitCount) marshal() (string, error) {
+	v, err := protojson.MarshalOptions{}.Marshal(msg)
+	if err != nil {
+		return "", err
+	}
+
+	return string(v), nil
+}
+
+func (msg *RateLimitCount) unmarshal(value string) error {
+	return protojson.UnmarshalOptions{}.Unmarshal([]byte(value), msg)
+}

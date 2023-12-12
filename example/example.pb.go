@@ -123,6 +123,124 @@ func (x *ValueForStaticKey) GetItems() *ValueForStaticKey_NestedItems {
 	return nil
 }
 
+type DynamicKey struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RpcName  string `protobuf:"bytes,1,opt,name=rpc_name,json=rpcName,proto3" json:"rpc_name,omitempty"`
+	CallerId string `protobuf:"bytes,2,opt,name=caller_id,json=callerId,proto3" json:"caller_id,omitempty"`
+	Bucket   int64  `protobuf:"varint,3,opt,name=bucket,proto3" json:"bucket,omitempty"`
+}
+
+func (x *DynamicKey) Reset() {
+	*x = DynamicKey{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_example_example_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DynamicKey) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DynamicKey) ProtoMessage() {}
+
+func (x *DynamicKey) ProtoReflect() protoreflect.Message {
+	mi := &file_example_example_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DynamicKey.ProtoReflect.Descriptor instead.
+func (*DynamicKey) Descriptor() ([]byte, []int) {
+	return file_example_example_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *DynamicKey) GetRpcName() string {
+	if x != nil {
+		return x.RpcName
+	}
+	return ""
+}
+
+func (x *DynamicKey) GetCallerId() string {
+	if x != nil {
+		return x.CallerId
+	}
+	return ""
+}
+
+func (x *DynamicKey) GetBucket() int64 {
+	if x != nil {
+		return x.Bucket
+	}
+	return 0
+}
+
+type RateLimitCount struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Count uint64 `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
+	Limit uint64 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+}
+
+func (x *RateLimitCount) Reset() {
+	*x = RateLimitCount{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_example_example_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RateLimitCount) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RateLimitCount) ProtoMessage() {}
+
+func (x *RateLimitCount) ProtoReflect() protoreflect.Message {
+	mi := &file_example_example_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RateLimitCount.ProtoReflect.Descriptor instead.
+func (*RateLimitCount) Descriptor() ([]byte, []int) {
+	return file_example_example_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *RateLimitCount) GetCount() uint64 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+func (x *RateLimitCount) GetLimit() uint64 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
 type ValueForStaticKey_NestedItems struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -134,7 +252,7 @@ type ValueForStaticKey_NestedItems struct {
 func (x *ValueForStaticKey_NestedItems) Reset() {
 	*x = ValueForStaticKey_NestedItems{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_example_example_proto_msgTypes[2]
+		mi := &file_example_example_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -147,7 +265,7 @@ func (x *ValueForStaticKey_NestedItems) String() string {
 func (*ValueForStaticKey_NestedItems) ProtoMessage() {}
 
 func (x *ValueForStaticKey_NestedItems) ProtoReflect() protoreflect.Message {
-	mi := &file_example_example_proto_msgTypes[2]
+	mi := &file_example_example_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -193,7 +311,19 @@ var file_example_example_proto_rawDesc = []byte{
 	0x05, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x1a, 0x23, 0x0a, 0x0b, 0x4e, 0x65, 0x73, 0x74, 0x65, 0x64,
 	0x49, 0x74, 0x65, 0x6d, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x18, 0x01,
 	0x20, 0x03, 0x28, 0x05, 0x52, 0x05, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x3a, 0x0e, 0xca, 0x3e, 0x0b,
-	0x12, 0x09, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2d, 0x78, 0x42, 0x25, 0x5a, 0x23, 0x67,
+	0x12, 0x09, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2d, 0x78, 0x22, 0x6f, 0x0a, 0x0a, 0x44,
+	0x79, 0x6e, 0x61, 0x6d, 0x69, 0x63, 0x4b, 0x65, 0x79, 0x12, 0x19, 0x0a, 0x08, 0x72, 0x70, 0x63,
+	0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x72, 0x70, 0x63,
+	0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x63, 0x61, 0x6c, 0x6c, 0x65, 0x72, 0x5f, 0x69,
+	0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x63, 0x61, 0x6c, 0x6c, 0x65, 0x72, 0x49,
+	0x64, 0x12, 0x16, 0x0a, 0x06, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x03, 0x52, 0x06, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x3a, 0x11, 0xc2, 0x3e, 0x0e, 0x12, 0x0a,
+	0x72, 0x61, 0x74, 0x65, 0x2d, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x22, 0x00, 0x22, 0x4d, 0x0a, 0x0e,
+	0x52, 0x61, 0x74, 0x65, 0x4c, 0x69, 0x6d, 0x69, 0x74, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x14,
+	0x0a, 0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x63,
+	0x6f, 0x75, 0x6e, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x04, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x3a, 0x0f, 0xca, 0x3e, 0x0c, 0x12,
+	0x0a, 0x72, 0x61, 0x74, 0x65, 0x2d, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x42, 0x25, 0x5a, 0x23, 0x67,
 	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x65, 0x68, 0x73, 0x75, 0x6e, 0x64,
 	0x61, 0x72, 0x2f, 0x6b, 0x76, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2f, 0x65, 0x78, 0x61, 0x6d, 0x70,
 	0x6c, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
@@ -211,14 +341,16 @@ func file_example_example_proto_rawDescGZIP() []byte {
 	return file_example_example_proto_rawDescData
 }
 
-var file_example_example_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_example_example_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_example_example_proto_goTypes = []interface{}{
 	(*StaticKey)(nil),                     // 0: example.StaticKey
 	(*ValueForStaticKey)(nil),             // 1: example.ValueForStaticKey
-	(*ValueForStaticKey_NestedItems)(nil), // 2: example.ValueForStaticKey.NestedItems
+	(*DynamicKey)(nil),                    // 2: example.DynamicKey
+	(*RateLimitCount)(nil),                // 3: example.RateLimitCount
+	(*ValueForStaticKey_NestedItems)(nil), // 4: example.ValueForStaticKey.NestedItems
 }
 var file_example_example_proto_depIdxs = []int32{
-	2, // 0: example.ValueForStaticKey.items:type_name -> example.ValueForStaticKey.NestedItems
+	4, // 0: example.ValueForStaticKey.items:type_name -> example.ValueForStaticKey.NestedItems
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -257,6 +389,30 @@ func file_example_example_proto_init() {
 			}
 		}
 		file_example_example_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DynamicKey); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_example_example_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RateLimitCount); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_example_example_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ValueForStaticKey_NestedItems); i {
 			case 0:
 				return &v.state
@@ -275,7 +431,7 @@ func file_example_example_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_example_example_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

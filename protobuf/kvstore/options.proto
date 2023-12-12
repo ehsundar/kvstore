@@ -14,8 +14,10 @@ message KVStoreKeyOptions {
   message StaticKeyMode {
     string key = 1;
   }
+  message DynamicKeyMode {}
   oneof mode {
     StaticKeyMode static_key = 3;
+    DynamicKeyMode dynamic_key = 4;
   }
 }
 

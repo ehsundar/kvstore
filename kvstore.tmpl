@@ -77,7 +77,7 @@ func (s *{{$codeSafeName|untitle}}Storage) Get(
 	return msg, nil
 }
 
-func (s *featureXStorage) Set(ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}},
+func (s *{{$codeSafeName|untitle}}Storage) Set(ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}},
 	value *{{$pairSpecs.ValueSpecs.MessageName}}, opts ...{{$codeSafeName}}CallOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error) {
 
 	k, err := key.marshal()
@@ -113,7 +113,7 @@ func (s *featureXStorage) Set(ctx context.Context, key *{{$pairSpecs.KeySpecs.Me
 	return nil, nil
 }
 
-func (s *featureXStorage) Del(ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}}) error {
+func (s *{{$codeSafeName|untitle}}Storage) Del(ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}}) error {
 
 	k, err := key.marshal()
 	if err != nil {
