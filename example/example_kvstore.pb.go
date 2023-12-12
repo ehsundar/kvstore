@@ -19,7 +19,7 @@ type FeatureXKVStore interface {
 	Get(context.Context, *StaticKey, ...FeatureXCallOption) (*StaticPrimitiveBoolValue, error)
 	Set(context.Context, *StaticKey,
 		*StaticPrimitiveBoolValue, ...FeatureXCallOption) (*StaticPrimitiveBoolValue, error)
-	Delete(context.Context, *StaticKey) error
+	Del(context.Context, *StaticKey) error
 }
 
 type featureXCallOptionContext struct{}
@@ -110,7 +110,7 @@ func (s *featureXStorage) Set(ctx context.Context, key *StaticKey,
 	return nil, nil
 }
 
-func (s *featureXStorage) Delete(ctx context.Context, key *StaticKey) error {
+func (s *featureXStorage) Del(ctx context.Context, key *StaticKey) error {
 
 	k, err := key.marshal()
 	if err != nil {

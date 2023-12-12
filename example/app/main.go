@@ -37,7 +37,7 @@ func main() {
 
 	fmt.Printf("%v\n", v.Value)
 
-	if err := featureX.Delete(ctx, &example.StaticKey{}); err != nil {
+	if err := featureX.Del(ctx, &example.StaticKey{}); err != nil {
 		panic(err)
 	}
 }

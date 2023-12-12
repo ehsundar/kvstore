@@ -22,7 +22,7 @@ type {{$codeSafeName}}KVStore interface {
 	Get(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, ...{{$codeSafeName}}CallOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error)
 	Set(context.Context, *{{$pairSpecs.KeySpecs.MessageName}},
 		*{{$pairSpecs.ValueSpecs.MessageName}}, ...{{$codeSafeName}}CallOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error)
-	Delete(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}) error
+	Del(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}) error
 }
 
 type {{$codeSafeName|untitle}}CallOptionContext struct{}
@@ -113,7 +113,7 @@ func (s *featureXStorage) Set(ctx context.Context, key *{{$pairSpecs.KeySpecs.Me
 	return nil, nil
 }
 
-func (s *featureXStorage) Delete(ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}}) error {
+func (s *featureXStorage) Del(ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}}) error {
 
 	k, err := key.marshal()
 	if err != nil {
