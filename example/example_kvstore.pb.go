@@ -16,69 +16,87 @@ import (
 // storage interface
 
 type FeatureXKVStore interface {
-	Get(context.Context, *StaticKey, ...FeatureXCallOption) (*ValueForStaticKey, error)
+	Get(context.Context, *StaticKey, ...FeatureXGetOption) (*ValueForStaticKey, error)
 	Set(context.Context, *StaticKey,
-		*ValueForStaticKey, ...FeatureXCallOption) (*ValueForStaticKey, error)
+		*ValueForStaticKey, ...FeatureXSetOption) (*ValueForStaticKey, error)
 	Del(context.Context, *StaticKey) error
 }
 
-type featureXCallOptionContext struct {
-	// common
+// get options
+type featureXGetOptionContext struct {
 	ttl  time.Duration
 	exAt time.Time
+	del  bool
+}
 
-	// set
+type FeatureXGetOption func(o *featureXGetOptionContext)
+
+func WithFeatureXGetTTL(ttl time.Duration) FeatureXGetOption {
+	return func(o *featureXGetOptionContext) {
+		o.ttl = ttl
+		o.exAt = time.Time{}
+		o.del = false
+	}
+}
+
+func WithFeatureXGetExpireAt(eat time.Time) FeatureXGetOption {
+	return func(o *featureXGetOptionContext) {
+		o.exAt = eat
+		o.ttl = 0
+		o.del = false
+	}
+}
+
+func WithFeatureXDel() FeatureXGetOption {
+	return func(o *featureXGetOptionContext) {
+		o.del = true
+		o.ttl = 0
+		o.exAt = time.Time{}
+	}
+}
+
+// set options
+type featureXSetOptionContext struct {
+	ttl     time.Duration
+	exAt    time.Time
 	mode    string
 	get     bool
 	keepTTL bool
-
-	// get
-	getDel bool
 }
 
-type FeatureXCallOption func(o *featureXCallOptionContext)
+type FeatureXSetOption func(o *featureXSetOptionContext)
 
-func WithFeatureXModeNX() FeatureXCallOption {
-	return func(o *featureXCallOptionContext) {
+func WithFeatureXSetOnlyIfNotExists() FeatureXSetOption {
+	return func(o *featureXSetOptionContext) {
 		o.mode = "NX"
 	}
 }
 
-func WithFeatureXModeXX() FeatureXCallOption {
-	return func(o *featureXCallOptionContext) {
+func WithFeatureXSetOnlyIfAlreadyExists() FeatureXSetOption {
+	return func(o *featureXSetOptionContext) {
 		o.mode = "XX"
 	}
 }
 
-func WithFeatureXGetDisabled() FeatureXCallOption {
-	return func(o *featureXCallOptionContext) {
+func WithFeatureXRetieveDisabled() FeatureXSetOption {
+	return func(o *featureXSetOptionContext) {
 		o.get = false
 	}
 }
 
-func WithFeatureXTTL(ttl time.Duration) FeatureXCallOption {
-	return func(o *featureXCallOptionContext) {
+func WithFeatureXSetTTL(ttl time.Duration) FeatureXSetOption {
+	return func(o *featureXSetOptionContext) {
 		o.ttl = ttl
 		o.exAt = time.Time{}
 		o.keepTTL = false
-		o.getDel = false
 	}
 }
 
-func WithFeatureXExpireAt(eat time.Time) FeatureXCallOption {
-	return func(o *featureXCallOptionContext) {
+func WithFeatureXSetExpireAt(eat time.Time) FeatureXSetOption {
+	return func(o *featureXSetOptionContext) {
 		o.exAt = eat
 		o.ttl = 0
 		o.keepTTL = false
-		o.getDel = false
-	}
-}
-
-func WithFeatureXGetDel() FeatureXCallOption {
-	return func(o *featureXCallOptionContext) {
-		o.getDel = true
-		o.ttl = 0
-		o.exAt = time.Time{}
 	}
 }
 
@@ -109,11 +127,11 @@ type featureXStorage struct {
 }
 
 func (s *featureXStorage) Get(
-	ctx context.Context, key *StaticKey, opts ...FeatureXCallOption) (*ValueForStaticKey, error) {
+	ctx context.Context, key *StaticKey, opts ...FeatureXGetOption) (*ValueForStaticKey, error) {
 
 	var err error
 
-	o := featureXCallOptionContext{}
+	o := featureXGetOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -125,7 +143,7 @@ func (s *featureXStorage) Get(
 
 	var v string
 	switch {
-	case o.getDel:
+	case o.del:
 		v, err = s.r.GetDel(ctx, k).Result()
 	case o.ttl != 0:
 		v, err = s.r.GetEx(ctx, k, o.ttl).Result()
@@ -150,9 +168,9 @@ func (s *featureXStorage) Get(
 }
 
 func (s *featureXStorage) Set(ctx context.Context, key *StaticKey,
-	value *ValueForStaticKey, opts ...FeatureXCallOption) (*ValueForStaticKey, error) {
+	value *ValueForStaticKey, opts ...FeatureXSetOption) (*ValueForStaticKey, error) {
 
-	o := featureXCallOptionContext{
+	o := featureXSetOptionContext{
 		get:     true,
 		keepTTL: true,
 	}
@@ -230,70 +248,113 @@ func (msg *ValueForStaticKey) unmarshal(value string) error {
 // storage interface
 
 type OnlineSessionsKVStore interface {
-	Get(context.Context, *OnlineSessionsKey, ...OnlineSessionsCallOption) (*OnlineSessionsValue, error)
+	Get(context.Context, *OnlineSessionsKey, ...OnlineSessionsGetOption) (*OnlineSessionsValue, error)
 	Set(context.Context, *OnlineSessionsKey,
-		*OnlineSessionsValue, ...OnlineSessionsCallOption) (*OnlineSessionsValue, error)
+		*OnlineSessionsValue, ...OnlineSessionsSetOption) (*OnlineSessionsValue, error)
 	Del(context.Context, *OnlineSessionsKey) error
-	Incr(context.Context, *OnlineSessionsKey, int, ...OnlineSessionsCallOption) (int, error)
+	Incr(context.Context, *OnlineSessionsKey, int, ...OnlineSessionsIncrOption) (int, error)
 }
 
-type onlineSessionsCallOptionContext struct {
-	// common
+// get options
+type onlineSessionsGetOptionContext struct {
 	ttl  time.Duration
 	exAt time.Time
+	del  bool
+}
 
-	// set
+type OnlineSessionsGetOption func(o *onlineSessionsGetOptionContext)
+
+func WithOnlineSessionsGetTTL(ttl time.Duration) OnlineSessionsGetOption {
+	return func(o *onlineSessionsGetOptionContext) {
+		o.ttl = ttl
+		o.exAt = time.Time{}
+		o.del = false
+	}
+}
+
+func WithOnlineSessionsGetExpireAt(eat time.Time) OnlineSessionsGetOption {
+	return func(o *onlineSessionsGetOptionContext) {
+		o.exAt = eat
+		o.ttl = 0
+		o.del = false
+	}
+}
+
+func WithOnlineSessionsDel() OnlineSessionsGetOption {
+	return func(o *onlineSessionsGetOptionContext) {
+		o.del = true
+		o.ttl = 0
+		o.exAt = time.Time{}
+	}
+}
+
+// set options
+type onlineSessionsSetOptionContext struct {
+	ttl     time.Duration
+	exAt    time.Time
 	mode    string
 	get     bool
 	keepTTL bool
-
-	// get
-	getDel bool
 }
 
-type OnlineSessionsCallOption func(o *onlineSessionsCallOptionContext)
+type OnlineSessionsSetOption func(o *onlineSessionsSetOptionContext)
 
-func WithOnlineSessionsModeNX() OnlineSessionsCallOption {
-	return func(o *onlineSessionsCallOptionContext) {
+func WithOnlineSessionsSetOnlyIfNotExists() OnlineSessionsSetOption {
+	return func(o *onlineSessionsSetOptionContext) {
 		o.mode = "NX"
 	}
 }
 
-func WithOnlineSessionsModeXX() OnlineSessionsCallOption {
-	return func(o *onlineSessionsCallOptionContext) {
+func WithOnlineSessionsSetOnlyIfAlreadyExists() OnlineSessionsSetOption {
+	return func(o *onlineSessionsSetOptionContext) {
 		o.mode = "XX"
 	}
 }
 
-func WithOnlineSessionsGetDisabled() OnlineSessionsCallOption {
-	return func(o *onlineSessionsCallOptionContext) {
+func WithOnlineSessionsRetieveDisabled() OnlineSessionsSetOption {
+	return func(o *onlineSessionsSetOptionContext) {
 		o.get = false
 	}
 }
 
-func WithOnlineSessionsTTL(ttl time.Duration) OnlineSessionsCallOption {
-	return func(o *onlineSessionsCallOptionContext) {
+func WithOnlineSessionsSetTTL(ttl time.Duration) OnlineSessionsSetOption {
+	return func(o *onlineSessionsSetOptionContext) {
 		o.ttl = ttl
 		o.exAt = time.Time{}
 		o.keepTTL = false
-		o.getDel = false
 	}
 }
 
-func WithOnlineSessionsExpireAt(eat time.Time) OnlineSessionsCallOption {
-	return func(o *onlineSessionsCallOptionContext) {
+func WithOnlineSessionsSetExpireAt(eat time.Time) OnlineSessionsSetOption {
+	return func(o *onlineSessionsSetOptionContext) {
 		o.exAt = eat
 		o.ttl = 0
 		o.keepTTL = false
-		o.getDel = false
 	}
 }
 
-func WithOnlineSessionsGetDel() OnlineSessionsCallOption {
-	return func(o *onlineSessionsCallOptionContext) {
-		o.getDel = true
-		o.ttl = 0
+// incr options
+type onlineSessionsIncrOptionContext struct {
+	ttl     time.Duration
+	exAt    time.Time
+	keepTTL bool
+}
+
+type OnlineSessionsIncrOption func(o *onlineSessionsIncrOptionContext)
+
+func WithOnlineSessionsIncrTTL(ttl time.Duration, keepTTL bool) OnlineSessionsIncrOption {
+	return func(o *onlineSessionsIncrOptionContext) {
+		o.ttl = ttl
+		o.keepTTL = keepTTL
 		o.exAt = time.Time{}
+	}
+}
+
+func WithOnlineSessionsIncrExpireAt(eat time.Time) OnlineSessionsIncrOption {
+	return func(o *onlineSessionsIncrOptionContext) {
+		o.exAt = eat
+		o.ttl = 0
+		o.keepTTL = false
 	}
 }
 
@@ -324,11 +385,11 @@ type onlineSessionsStorage struct {
 }
 
 func (s *onlineSessionsStorage) Get(
-	ctx context.Context, key *OnlineSessionsKey, opts ...OnlineSessionsCallOption) (*OnlineSessionsValue, error) {
+	ctx context.Context, key *OnlineSessionsKey, opts ...OnlineSessionsGetOption) (*OnlineSessionsValue, error) {
 
 	var err error
 
-	o := onlineSessionsCallOptionContext{}
+	o := onlineSessionsGetOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -340,7 +401,7 @@ func (s *onlineSessionsStorage) Get(
 
 	var v string
 	switch {
-	case o.getDel:
+	case o.del:
 		v, err = s.r.GetDel(ctx, k).Result()
 	case o.ttl != 0:
 		v, err = s.r.GetEx(ctx, k, o.ttl).Result()
@@ -365,9 +426,9 @@ func (s *onlineSessionsStorage) Get(
 }
 
 func (s *onlineSessionsStorage) Set(ctx context.Context, key *OnlineSessionsKey,
-	value *OnlineSessionsValue, opts ...OnlineSessionsCallOption) (*OnlineSessionsValue, error) {
+	value *OnlineSessionsValue, opts ...OnlineSessionsSetOption) (*OnlineSessionsValue, error) {
 
-	o := onlineSessionsCallOptionContext{
+	o := onlineSessionsSetOptionContext{
 		get:     true,
 		keepTTL: true,
 	}
@@ -420,12 +481,9 @@ func (s *onlineSessionsStorage) Del(ctx context.Context, key *OnlineSessionsKey)
 }
 
 func (s *onlineSessionsStorage) Incr(ctx context.Context,
-	key *OnlineSessionsKey, by int, opts ...OnlineSessionsCallOption) (int, error) {
+	key *OnlineSessionsKey, by int, opts ...OnlineSessionsIncrOption) (int, error) {
 
-	o := onlineSessionsCallOptionContext{
-		get:     true,
-		keepTTL: true,
-	}
+	o := onlineSessionsIncrOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -480,69 +538,87 @@ func (msg *OnlineSessionsValue) unmarshal(value string) error {
 // storage interface
 
 type RateLimitKVStore interface {
-	Get(context.Context, *DynamicKey, ...RateLimitCallOption) (*RateLimitCount, error)
+	Get(context.Context, *DynamicKey, ...RateLimitGetOption) (*RateLimitCount, error)
 	Set(context.Context, *DynamicKey,
-		*RateLimitCount, ...RateLimitCallOption) (*RateLimitCount, error)
+		*RateLimitCount, ...RateLimitSetOption) (*RateLimitCount, error)
 	Del(context.Context, *DynamicKey) error
 }
 
-type rateLimitCallOptionContext struct {
-	// common
+// get options
+type rateLimitGetOptionContext struct {
 	ttl  time.Duration
 	exAt time.Time
+	del  bool
+}
 
-	// set
+type RateLimitGetOption func(o *rateLimitGetOptionContext)
+
+func WithRateLimitGetTTL(ttl time.Duration) RateLimitGetOption {
+	return func(o *rateLimitGetOptionContext) {
+		o.ttl = ttl
+		o.exAt = time.Time{}
+		o.del = false
+	}
+}
+
+func WithRateLimitGetExpireAt(eat time.Time) RateLimitGetOption {
+	return func(o *rateLimitGetOptionContext) {
+		o.exAt = eat
+		o.ttl = 0
+		o.del = false
+	}
+}
+
+func WithRateLimitDel() RateLimitGetOption {
+	return func(o *rateLimitGetOptionContext) {
+		o.del = true
+		o.ttl = 0
+		o.exAt = time.Time{}
+	}
+}
+
+// set options
+type rateLimitSetOptionContext struct {
+	ttl     time.Duration
+	exAt    time.Time
 	mode    string
 	get     bool
 	keepTTL bool
-
-	// get
-	getDel bool
 }
 
-type RateLimitCallOption func(o *rateLimitCallOptionContext)
+type RateLimitSetOption func(o *rateLimitSetOptionContext)
 
-func WithRateLimitModeNX() RateLimitCallOption {
-	return func(o *rateLimitCallOptionContext) {
+func WithRateLimitSetOnlyIfNotExists() RateLimitSetOption {
+	return func(o *rateLimitSetOptionContext) {
 		o.mode = "NX"
 	}
 }
 
-func WithRateLimitModeXX() RateLimitCallOption {
-	return func(o *rateLimitCallOptionContext) {
+func WithRateLimitSetOnlyIfAlreadyExists() RateLimitSetOption {
+	return func(o *rateLimitSetOptionContext) {
 		o.mode = "XX"
 	}
 }
 
-func WithRateLimitGetDisabled() RateLimitCallOption {
-	return func(o *rateLimitCallOptionContext) {
+func WithRateLimitRetieveDisabled() RateLimitSetOption {
+	return func(o *rateLimitSetOptionContext) {
 		o.get = false
 	}
 }
 
-func WithRateLimitTTL(ttl time.Duration) RateLimitCallOption {
-	return func(o *rateLimitCallOptionContext) {
+func WithRateLimitSetTTL(ttl time.Duration) RateLimitSetOption {
+	return func(o *rateLimitSetOptionContext) {
 		o.ttl = ttl
 		o.exAt = time.Time{}
 		o.keepTTL = false
-		o.getDel = false
 	}
 }
 
-func WithRateLimitExpireAt(eat time.Time) RateLimitCallOption {
-	return func(o *rateLimitCallOptionContext) {
+func WithRateLimitSetExpireAt(eat time.Time) RateLimitSetOption {
+	return func(o *rateLimitSetOptionContext) {
 		o.exAt = eat
 		o.ttl = 0
 		o.keepTTL = false
-		o.getDel = false
-	}
-}
-
-func WithRateLimitGetDel() RateLimitCallOption {
-	return func(o *rateLimitCallOptionContext) {
-		o.getDel = true
-		o.ttl = 0
-		o.exAt = time.Time{}
 	}
 }
 
@@ -573,11 +649,11 @@ type rateLimitStorage struct {
 }
 
 func (s *rateLimitStorage) Get(
-	ctx context.Context, key *DynamicKey, opts ...RateLimitCallOption) (*RateLimitCount, error) {
+	ctx context.Context, key *DynamicKey, opts ...RateLimitGetOption) (*RateLimitCount, error) {
 
 	var err error
 
-	o := rateLimitCallOptionContext{}
+	o := rateLimitGetOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -589,7 +665,7 @@ func (s *rateLimitStorage) Get(
 
 	var v string
 	switch {
-	case o.getDel:
+	case o.del:
 		v, err = s.r.GetDel(ctx, k).Result()
 	case o.ttl != 0:
 		v, err = s.r.GetEx(ctx, k, o.ttl).Result()
@@ -614,9 +690,9 @@ func (s *rateLimitStorage) Get(
 }
 
 func (s *rateLimitStorage) Set(ctx context.Context, key *DynamicKey,
-	value *RateLimitCount, opts ...RateLimitCallOption) (*RateLimitCount, error) {
+	value *RateLimitCount, opts ...RateLimitSetOption) (*RateLimitCount, error) {
 
-	o := rateLimitCallOptionContext{
+	o := rateLimitSetOptionContext{
 		get:     true,
 		keepTTL: true,
 	}

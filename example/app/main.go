@@ -33,7 +33,7 @@ func main() {
 			Items: []int32{1, 2, 3},
 		},
 	},
-		example.WithFeatureXTTL(10*time.Second),
+		example.WithFeatureXSetTTL(10*time.Second),
 	)
 	if err != nil {
 		panic(err)
@@ -61,7 +61,7 @@ func main() {
 		Count: 10,
 		Limit: 100,
 	},
-		example.WithRateLimitTTL(10*time.Second),
+		example.WithRateLimitSetTTL(10*time.Second),
 	)
 	if err != nil {
 		panic(err)
@@ -80,7 +80,7 @@ func main() {
 
 	sessions := example.NewOnlineSessionsStore(r)
 	current, err := sessions.Incr(ctx, &example.OnlineSessionsKey{}, 2,
-		example.WithOnlineSessionsTTL(10*time.Second),
+		example.WithOnlineSessionsIncrTTL(10*time.Second, true),
 	)
 	if err != nil {
 		panic(err)

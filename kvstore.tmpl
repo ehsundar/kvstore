@@ -19,73 +19,118 @@ import (
 // storage interface
 
 type {{$codeSafeName}}KVStore interface {
-	Get(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, ...{{$codeSafeName}}CallOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error)
+	Get(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, ...{{$codeSafeName}}GetOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error)
 	Set(context.Context, *{{$pairSpecs.KeySpecs.MessageName}},
-		*{{$pairSpecs.ValueSpecs.MessageName}}, ...{{$codeSafeName}}CallOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error)
+		*{{$pairSpecs.ValueSpecs.MessageName}}, ...{{$codeSafeName}}SetOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error)
 	Del(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}) error
-	{{if $pairSpecs.ValueSpecs.NumericInt}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, int, ...{{$codeSafeName}}CallOption) (int, error){{end}}
-	{{if $pairSpecs.ValueSpecs.NumericFloat}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, float64, ...{{$codeSafeName}}CallOption) (float64, error){{end}}
+	{{if $pairSpecs.ValueSpecs.NumericInt}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, int, ...{{$codeSafeName}}IncrOption) (int, error){{end}}
+	{{if $pairSpecs.ValueSpecs.NumericFloat}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, float64, ...{{$codeSafeName}}IncrOption) (float64, error){{end}}
 }
 
-type {{$codeSafeName|untitle}}CallOptionContext struct{
-	// common
+// get options
+type {{$codeSafeName|untitle}}GetOptionContext struct{
 	ttl  time.Duration
 	exAt time.Time
+	del  bool
+}
 
-	// set
+type {{$codeSafeName}}GetOption func(o *{{$codeSafeName|untitle}}GetOptionContext)
+
+func With{{$codeSafeName}}GetTTL(ttl time.Duration) {{$codeSafeName}}GetOption {
+	return func(o *{{$codeSafeName|untitle}}GetOptionContext) {
+		o.ttl = ttl
+		o.exAt = time.Time{}
+		o.del = false
+	}
+}
+
+func With{{$codeSafeName}}GetExpireAt(eat time.Time) {{$codeSafeName}}GetOption {
+	return func(o *{{$codeSafeName|untitle}}GetOptionContext) {
+		o.exAt = eat
+		o.ttl = 0
+		o.del = false
+	}
+}
+
+func With{{$codeSafeName}}Del() {{$codeSafeName}}GetOption {
+	return func(o *{{$codeSafeName|untitle}}GetOptionContext) {
+		o.del = true
+		o.ttl = 0
+		o.exAt = time.Time{}
+	}
+}
+
+// set options
+type {{$codeSafeName|untitle}}SetOptionContext struct{
+	ttl     time.Duration
+	exAt    time.Time
 	mode    string
 	get     bool
 	keepTTL bool
-
-	// get
-	getDel bool
 }
 
-type {{$codeSafeName}}CallOption func(o *{{$codeSafeName|untitle}}CallOptionContext)
+type {{$codeSafeName}}SetOption func(o *{{$codeSafeName|untitle}}SetOptionContext)
 
-func With{{$codeSafeName}}ModeNX() {{$codeSafeName}}CallOption {
-	return func(o *{{$codeSafeName|untitle}}CallOptionContext) {
+func With{{$codeSafeName}}SetOnlyIfNotExists() {{$codeSafeName}}SetOption {
+	return func(o *{{$codeSafeName|untitle}}SetOptionContext) {
 		o.mode = "NX"
 	}
 }
 
-func With{{$codeSafeName}}ModeXX() {{$codeSafeName}}CallOption {
-	return func(o *{{$codeSafeName|untitle}}CallOptionContext) {
+func With{{$codeSafeName}}SetOnlyIfAlreadyExists() {{$codeSafeName}}SetOption {
+	return func(o *{{$codeSafeName|untitle}}SetOptionContext) {
 		o.mode = "XX"
 	}
 }
 
-func With{{$codeSafeName}}GetDisabled() {{$codeSafeName}}CallOption {
-	return func(o *{{$codeSafeName|untitle}}CallOptionContext) {
+func With{{$codeSafeName}}RetieveDisabled() {{$codeSafeName}}SetOption {
+	return func(o *{{$codeSafeName|untitle}}SetOptionContext) {
 		o.get = false
 	}
 }
 
-func With{{$codeSafeName}}TTL(ttl time.Duration) {{$codeSafeName}}CallOption {
-	return func(o *{{$codeSafeName|untitle}}CallOptionContext) {
+func With{{$codeSafeName}}SetTTL(ttl time.Duration) {{$codeSafeName}}SetOption {
+	return func(o *{{$codeSafeName|untitle}}SetOptionContext) {
 		o.ttl = ttl
 		o.exAt = time.Time{}
 		o.keepTTL = false
-		o.getDel = false
 	}
 }
 
-func With{{$codeSafeName}}ExpireAt(eat time.Time) {{$codeSafeName}}CallOption {
-	return func(o *{{$codeSafeName|untitle}}CallOptionContext) {
+func With{{$codeSafeName}}SetExpireAt(eat time.Time) {{$codeSafeName}}SetOption {
+	return func(o *{{$codeSafeName|untitle}}SetOptionContext) {
 		o.exAt = eat
 		o.ttl = 0
 		o.keepTTL = false
-		o.getDel = false
 	}
 }
 
-func With{{$codeSafeName}}GetDel() {{$codeSafeName}}CallOption {
-	return func(o *{{$codeSafeName|untitle}}CallOptionContext) {
-		o.getDel = true
-		o.ttl = 0
+{{if or $pairSpecs.ValueSpecs.NumericInt $pairSpecs.ValueSpecs.NumericFloat}}
+// incr options
+type {{$codeSafeName|untitle}}IncrOptionContext struct{
+	ttl  time.Duration
+	exAt time.Time
+	keepTTL bool
+}
+
+type {{$codeSafeName}}IncrOption func(o *{{$codeSafeName|untitle}}IncrOptionContext)
+
+func With{{$codeSafeName}}IncrTTL(ttl time.Duration, keepTTL bool) {{$codeSafeName}}IncrOption {
+	return func(o *{{$codeSafeName|untitle}}IncrOptionContext) {
+		o.ttl = ttl
+		o.keepTTL = keepTTL
 		o.exAt = time.Time{}
 	}
 }
+
+func With{{$codeSafeName}}IncrExpireAt(eat time.Time) {{$codeSafeName}}IncrOption {
+	return func(o *{{$codeSafeName|untitle}}IncrOptionContext) {
+		o.exAt = eat
+		o.ttl = 0
+		o.keepTTL = false
+	}
+}
+{{end}}
 
 // storage construction
 
@@ -114,11 +159,11 @@ type {{$codeSafeName|untitle}}Storage struct {
 }
 
 func (s *{{$codeSafeName|untitle}}Storage) Get(
-	ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}}, opts ...{{$codeSafeName}}CallOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error) {
+	ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}}, opts ...{{$codeSafeName}}GetOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error) {
 
 	var err error
 
-	o := {{$codeSafeName|untitle}}CallOptionContext{}
+	o := {{$codeSafeName|untitle}}GetOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -130,7 +175,7 @@ func (s *{{$codeSafeName|untitle}}Storage) Get(
 
 	var v string
 	switch {
-	case o.getDel:
+	case o.del:
 		v, err = s.r.GetDel(ctx, k).Result()
 	case o.ttl != 0:
 		v, err = s.r.GetEx(ctx, k, o.ttl).Result()
@@ -155,9 +200,9 @@ func (s *{{$codeSafeName|untitle}}Storage) Get(
 }
 
 func (s *{{$codeSafeName|untitle}}Storage) Set(ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}},
-	value *{{$pairSpecs.ValueSpecs.MessageName}}, opts ...{{$codeSafeName}}CallOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error) {
+	value *{{$pairSpecs.ValueSpecs.MessageName}}, opts ...{{$codeSafeName}}SetOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error) {
 
-	o := {{$codeSafeName|untitle}}CallOptionContext{
+	o := {{$codeSafeName|untitle}}SetOptionContext{
 		get:     true,
 		keepTTL: true,
 	}
@@ -210,12 +255,9 @@ func (s *{{$codeSafeName|untitle}}Storage) Del(ctx context.Context, key *{{$pair
 }
 {{if $pairSpecs.ValueSpecs.NumericInt}}
 func (s *{{$codeSafeName|untitle}}Storage) Incr(ctx context.Context,
-	key *{{$pairSpecs.KeySpecs.MessageName}}, by int, opts ...{{$codeSafeName}}CallOption) (int, error) {
+	key *{{$pairSpecs.KeySpecs.MessageName}}, by int, opts ...{{$codeSafeName}}IncrOption) (int, error) {
 
-	o := {{$codeSafeName|untitle}}CallOptionContext{
-		get:     true,
-		keepTTL: true,
-	}
+	o := {{$codeSafeName|untitle}}IncrOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
 	}
