@@ -9,6 +9,7 @@ import (
 
 	"github.com/ehsundar/kvstore/internal/keymode"
 	"github.com/ehsundar/kvstore/internal/optparse"
+	"github.com/ehsundar/kvstore/internal/valuemode"
 )
 
 func main() {
@@ -44,6 +45,11 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 			panic(err)
 		}
 
+		valueMode, err := valuemode.GetValueMode(pair.ValueOptions, pair.ValueDesc)
+		if err != nil {
+			panic(err)
+		}
+
 		templateCtx.Pairs[name] = storagePair{
 			CodeSafeName: strcase.ToCamel(name),
 			KeySpecs: keySpecs{
@@ -52,8 +58,10 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 				KeyFormat:   keyFormat,
 			},
 			ValueSpecs: valueSpecs{
-				Opts:        pair.ValueOptions,
-				MessageName: string(pair.ValueDesc.Name()),
+				Opts:         pair.ValueOptions,
+				MessageName:  string(pair.ValueDesc.Name()),
+				NumericInt:   valueMode == valuemode.ValueModeNumericInt,
+				NumericFloat: valueMode == valuemode.ValueModeNumericFloat,
 			},
 		}
 	}

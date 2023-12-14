@@ -77,4 +77,12 @@ func main() {
 	}
 
 	fmt.Printf("%d/%d", rateLimitValue.Count, rateLimitValue.Limit)
+
+	sessions := example.NewOnlineSessionsStore(r)
+	current, err := sessions.Incr(ctx, &example.OnlineSessionsKey{}, 2)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%v\n", current)
 }

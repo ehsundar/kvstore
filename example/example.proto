@@ -47,3 +47,21 @@ message RateLimitCount {
   uint64 count = 1;
   uint64 limit = 2;
 }
+
+message OnlineSessionsKey {
+  option (kvstore.key_options) = {
+    name: "online-sessions"
+    static_key: {
+      key: "counter"
+    }
+  };
+}
+
+message OnlineSessionsValue {
+  option (kvstore.value_options) = {
+    name: "online-sessions"
+    numeral: {}
+  };
+
+  int64 count = 1;
+}

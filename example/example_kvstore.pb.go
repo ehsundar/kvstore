@@ -226,6 +226,233 @@ func (msg *ValueForStaticKey) unmarshal(value string) error {
 	return protojson.UnmarshalOptions{}.Unmarshal([]byte(value), msg)
 }
 
+// generated code for OnlineSessions
+// storage interface
+
+type OnlineSessionsKVStore interface {
+	Get(context.Context, *OnlineSessionsKey, ...OnlineSessionsCallOption) (*OnlineSessionsValue, error)
+	Set(context.Context, *OnlineSessionsKey,
+		*OnlineSessionsValue, ...OnlineSessionsCallOption) (*OnlineSessionsValue, error)
+	Del(context.Context, *OnlineSessionsKey) error
+	Incr(context.Context, *OnlineSessionsKey, int) (int, error)
+}
+
+type onlineSessionsCallOptionContext struct {
+	// common
+	ttl  time.Duration
+	exAt time.Time
+
+	// set
+	mode    string
+	get     bool
+	keepTTL bool
+
+	// get
+	getDel bool
+}
+
+type OnlineSessionsCallOption func(o *onlineSessionsCallOptionContext)
+
+func WithOnlineSessionsModeNX() OnlineSessionsCallOption {
+	return func(o *onlineSessionsCallOptionContext) {
+		o.mode = "NX"
+	}
+}
+
+func WithOnlineSessionsModeXX() OnlineSessionsCallOption {
+	return func(o *onlineSessionsCallOptionContext) {
+		o.mode = "XX"
+	}
+}
+
+func WithOnlineSessionsGetDisabled() OnlineSessionsCallOption {
+	return func(o *onlineSessionsCallOptionContext) {
+		o.get = false
+	}
+}
+
+func WithOnlineSessionsTTL(ttl time.Duration) OnlineSessionsCallOption {
+	return func(o *onlineSessionsCallOptionContext) {
+		o.ttl = ttl
+		o.exAt = time.Time{}
+		o.keepTTL = false
+		o.getDel = false
+	}
+}
+
+func WithOnlineSessionsExpireAt(eat time.Time) OnlineSessionsCallOption {
+	return func(o *onlineSessionsCallOptionContext) {
+		o.exAt = eat
+		o.ttl = 0
+		o.keepTTL = false
+		o.getDel = false
+	}
+}
+
+func WithOnlineSessionsGetDel() OnlineSessionsCallOption {
+	return func(o *onlineSessionsCallOptionContext) {
+		o.getDel = true
+		o.ttl = 0
+		o.exAt = time.Time{}
+	}
+}
+
+// storage construction
+
+func NewOnlineSessionsStore(r redis.Cmdable, opts ...onlineSessionsOption) OnlineSessionsKVStore {
+	oc := onlineSessionsOptionContext{}
+
+	for _, opt := range opts {
+		opt(&oc)
+	}
+
+	return &onlineSessionsStorage{
+		r:    r,
+		opts: oc,
+	}
+}
+
+type onlineSessionsOptionContext struct{}
+
+type onlineSessionsOption func(o *onlineSessionsOptionContext)
+
+// storage implementation
+
+type onlineSessionsStorage struct {
+	r    redis.Cmdable
+	opts onlineSessionsOptionContext
+}
+
+func (s *onlineSessionsStorage) Get(
+	ctx context.Context, key *OnlineSessionsKey, opts ...OnlineSessionsCallOption) (*OnlineSessionsValue, error) {
+
+	var err error
+
+	o := onlineSessionsCallOptionContext{}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	k, err := key.marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var v string
+	switch {
+	case o.getDel:
+		v, err = s.r.GetDel(ctx, k).Result()
+	case o.ttl != 0:
+		v, err = s.r.GetEx(ctx, k, o.ttl).Result()
+	case !o.exAt.IsZero():
+		// TODO: PR to go-redis for exAt
+		err = errors.New("exat is not supported by go-redis")
+	default:
+		v, err = s.r.Get(ctx, k).Result()
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	msg := &OnlineSessionsValue{}
+	err = msg.unmarshal(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return msg, nil
+}
+
+func (s *onlineSessionsStorage) Set(ctx context.Context, key *OnlineSessionsKey,
+	value *OnlineSessionsValue, opts ...OnlineSessionsCallOption) (*OnlineSessionsValue, error) {
+
+	o := onlineSessionsCallOptionContext{
+		get:     true,
+		keepTTL: true,
+	}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	k, err := key.marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	mv, err := value.marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	v, err := s.r.SetArgs(ctx, k, mv, redis.SetArgs{
+		Mode:     o.mode,
+		TTL:      o.ttl,
+		ExpireAt: o.exAt,
+		Get:      o.get,
+		KeepTTL:  o.keepTTL,
+	}).Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return nil, err
+	}
+
+	if v != "" {
+		msg := &OnlineSessionsValue{}
+		err = msg.unmarshal(v)
+		if err != nil {
+			return nil, err
+		}
+		return msg, nil
+	}
+
+	return nil, nil
+}
+
+func (s *onlineSessionsStorage) Del(ctx context.Context, key *OnlineSessionsKey) error {
+
+	k, err := key.marshal()
+	if err != nil {
+		return err
+	}
+
+	_, err = s.r.Del(ctx, k).Result()
+	return err
+}
+
+func (s *onlineSessionsStorage) Incr(ctx context.Context,
+	key *OnlineSessionsKey, by int) (int, error) {
+
+	k, err := key.marshal()
+	if err != nil {
+		return 0, err
+	}
+
+	v, err := s.r.IncrBy(ctx, k, int64(by)).Result()
+	return int(v), err
+}
+
+// message marshallers
+
+func (msg *OnlineSessionsKey) marshal() (string, error) {
+
+	v := fmt.Sprintf("online-sessions:counter")
+
+	return v, nil
+}
+
+func (msg *OnlineSessionsValue) marshal() (string, error) {
+	v, err := protojson.MarshalOptions{}.Marshal(msg)
+	if err != nil {
+		return "", err
+	}
+
+	return string(v), nil
+}
+
+func (msg *OnlineSessionsValue) unmarshal(value string) error {
+	return protojson.UnmarshalOptions{}.Unmarshal([]byte(value), msg)
+}
+
 // generated code for RateLimit
 // storage interface
 

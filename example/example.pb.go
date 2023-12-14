@@ -241,6 +241,91 @@ func (x *RateLimitCount) GetLimit() uint64 {
 	return 0
 }
 
+type OnlineSessionsKey struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *OnlineSessionsKey) Reset() {
+	*x = OnlineSessionsKey{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_example_example_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *OnlineSessionsKey) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OnlineSessionsKey) ProtoMessage() {}
+
+func (x *OnlineSessionsKey) ProtoReflect() protoreflect.Message {
+	mi := &file_example_example_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OnlineSessionsKey.ProtoReflect.Descriptor instead.
+func (*OnlineSessionsKey) Descriptor() ([]byte, []int) {
+	return file_example_example_proto_rawDescGZIP(), []int{4}
+}
+
+type OnlineSessionsValue struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Count int64 `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
+}
+
+func (x *OnlineSessionsValue) Reset() {
+	*x = OnlineSessionsValue{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_example_example_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *OnlineSessionsValue) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OnlineSessionsValue) ProtoMessage() {}
+
+func (x *OnlineSessionsValue) ProtoReflect() protoreflect.Message {
+	mi := &file_example_example_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OnlineSessionsValue.ProtoReflect.Descriptor instead.
+func (*OnlineSessionsValue) Descriptor() ([]byte, []int) {
+	return file_example_example_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *OnlineSessionsValue) GetCount() int64 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
 type ValueForStaticKey_NestedItems struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -252,7 +337,7 @@ type ValueForStaticKey_NestedItems struct {
 func (x *ValueForStaticKey_NestedItems) Reset() {
 	*x = ValueForStaticKey_NestedItems{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_example_example_proto_msgTypes[4]
+		mi := &file_example_example_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -265,7 +350,7 @@ func (x *ValueForStaticKey_NestedItems) String() string {
 func (*ValueForStaticKey_NestedItems) ProtoMessage() {}
 
 func (x *ValueForStaticKey_NestedItems) ProtoReflect() protoreflect.Message {
-	mi := &file_example_example_proto_msgTypes[4]
+	mi := &file_example_example_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -323,10 +408,18 @@ var file_example_example_proto_rawDesc = []byte{
 	0x0a, 0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x63,
 	0x6f, 0x75, 0x6e, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x02, 0x20,
 	0x01, 0x28, 0x04, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x3a, 0x0f, 0xca, 0x3e, 0x0c, 0x0a,
-	0x0a, 0x72, 0x61, 0x74, 0x65, 0x2d, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x42, 0x25, 0x5a, 0x23, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x65, 0x68, 0x73, 0x75, 0x6e, 0x64,
-	0x61, 0x72, 0x2f, 0x6b, 0x76, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2f, 0x65, 0x78, 0x61, 0x6d, 0x70,
-	0x6c, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x0a, 0x72, 0x61, 0x74, 0x65, 0x2d, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x22, 0x34, 0x0a, 0x11, 0x4f,
+	0x6e, 0x6c, 0x69, 0x6e, 0x65, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x4b, 0x65, 0x79,
+	0x3a, 0x1f, 0xc2, 0x3e, 0x1c, 0x0a, 0x0f, 0x6f, 0x6e, 0x6c, 0x69, 0x6e, 0x65, 0x2d, 0x73, 0x65,
+	0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x09, 0x0a, 0x07, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x65,
+	0x72, 0x22, 0x43, 0x0a, 0x13, 0x4f, 0x6e, 0x6c, 0x69, 0x6e, 0x65, 0x53, 0x65, 0x73, 0x73, 0x69,
+	0x6f, 0x6e, 0x73, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x63, 0x6f, 0x75, 0x6e,
+	0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x3a, 0x16,
+	0xca, 0x3e, 0x13, 0x0a, 0x0f, 0x6f, 0x6e, 0x6c, 0x69, 0x6e, 0x65, 0x2d, 0x73, 0x65, 0x73, 0x73,
+	0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x00, 0x42, 0x25, 0x5a, 0x23, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
+	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x65, 0x68, 0x73, 0x75, 0x6e, 0x64, 0x61, 0x72, 0x2f, 0x6b, 0x76,
+	0x73, 0x74, 0x6f, 0x72, 0x65, 0x2f, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -341,16 +434,18 @@ func file_example_example_proto_rawDescGZIP() []byte {
 	return file_example_example_proto_rawDescData
 }
 
-var file_example_example_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_example_example_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_example_example_proto_goTypes = []interface{}{
 	(*StaticKey)(nil),                     // 0: example.StaticKey
 	(*ValueForStaticKey)(nil),             // 1: example.ValueForStaticKey
 	(*DynamicKey)(nil),                    // 2: example.DynamicKey
 	(*RateLimitCount)(nil),                // 3: example.RateLimitCount
-	(*ValueForStaticKey_NestedItems)(nil), // 4: example.ValueForStaticKey.NestedItems
+	(*OnlineSessionsKey)(nil),             // 4: example.OnlineSessionsKey
+	(*OnlineSessionsValue)(nil),           // 5: example.OnlineSessionsValue
+	(*ValueForStaticKey_NestedItems)(nil), // 6: example.ValueForStaticKey.NestedItems
 }
 var file_example_example_proto_depIdxs = []int32{
-	4, // 0: example.ValueForStaticKey.items:type_name -> example.ValueForStaticKey.NestedItems
+	6, // 0: example.ValueForStaticKey.items:type_name -> example.ValueForStaticKey.NestedItems
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -413,6 +508,30 @@ func file_example_example_proto_init() {
 			}
 		}
 		file_example_example_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*OnlineSessionsKey); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_example_example_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*OnlineSessionsValue); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_example_example_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ValueForStaticKey_NestedItems); i {
 			case 0:
 				return &v.state
@@ -431,7 +550,7 @@ func file_example_example_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_example_example_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

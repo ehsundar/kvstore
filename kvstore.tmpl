@@ -23,6 +23,8 @@ type {{$codeSafeName}}KVStore interface {
 	Set(context.Context, *{{$pairSpecs.KeySpecs.MessageName}},
 		*{{$pairSpecs.ValueSpecs.MessageName}}, ...{{$codeSafeName}}CallOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error)
 	Del(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}) error
+	{{if $pairSpecs.ValueSpecs.NumericInt}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, int) (int, error){{end}}
+	{{if $pairSpecs.ValueSpecs.NumericFloat}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, float64) (float64, error){{end}}
 }
 
 type {{$codeSafeName|untitle}}CallOptionContext struct{
@@ -206,7 +208,32 @@ func (s *{{$codeSafeName|untitle}}Storage) Del(ctx context.Context, key *{{$pair
 	_, err = s.r.Del(ctx, k).Result()
 	return err
 }
+{{if $pairSpecs.ValueSpecs.NumericInt}}
+func (s *{{$codeSafeName|untitle}}Storage) Incr(ctx context.Context,
+	key *{{$pairSpecs.KeySpecs.MessageName}}, by int) (int, error) {
 
+	k, err := key.marshal()
+	if err != nil {
+		return 0, err
+	}
+
+	v, err := s.r.IncrBy(ctx, k, int64(by)).Result()
+	return int(v), err
+}
+{{end}}
+{{if $pairSpecs.ValueSpecs.NumericFloat}}
+func (s *{{$codeSafeName|untitle}}Storage) Incr(ctx context.Context,
+	key *{{$pairSpecs.KeySpecs.MessageName}}, by float64) (float64, error) {
+
+	k, err := key.marshal()
+	if err != nil {
+		return 0, err
+	}
+
+	v, err := s.r.IncrByFloat(ctx, k, by).Result()
+	return v, err
+}
+{{end}}
 // message marshallers
 
 func (msg *{{$pairSpecs.KeySpecs.MessageName}}) marshal() (string, error) {

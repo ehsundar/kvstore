@@ -50,7 +50,9 @@ type keySpecs struct {
 type valueSpecs struct {
 	Opts *kvstoreProto.KVStoreValueOptions
 
-	MessageName string
+	MessageName  string
+	NumericInt   bool
+	NumericFloat bool
 }
 
 func Render(templateContext kvstoreTemplateContext) (string, error) {
