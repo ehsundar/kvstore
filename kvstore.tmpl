@@ -23,8 +23,8 @@ type {{$codeSafeName}}KVStore interface {
 	Set(context.Context, *{{$pairSpecs.KeySpecs.MessageName}},
 		*{{$pairSpecs.ValueSpecs.MessageName}}, ...{{$codeSafeName}}CallOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error)
 	Del(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}) error
-	{{if $pairSpecs.ValueSpecs.NumericInt}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, int) (int, error){{end}}
-	{{if $pairSpecs.ValueSpecs.NumericFloat}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, float64) (float64, error){{end}}
+	{{if $pairSpecs.ValueSpecs.NumericInt}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, int, ...{{$codeSafeName}}CallOption) (int, error){{end}}
+	{{if $pairSpecs.ValueSpecs.NumericFloat}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, float64, ...{{$codeSafeName}}CallOption) (float64, error){{end}}
 }
 
 type {{$codeSafeName|untitle}}CallOptionContext struct{
@@ -210,7 +210,15 @@ func (s *{{$codeSafeName|untitle}}Storage) Del(ctx context.Context, key *{{$pair
 }
 {{if $pairSpecs.ValueSpecs.NumericInt}}
 func (s *{{$codeSafeName|untitle}}Storage) Incr(ctx context.Context,
-	key *{{$pairSpecs.KeySpecs.MessageName}}, by int) (int, error) {
+	key *{{$pairSpecs.KeySpecs.MessageName}}, by int, opts ...{{$codeSafeName}}CallOption) (int, error) {
+
+	o := {{$codeSafeName|untitle}}CallOptionContext{
+		get:     true,
+		keepTTL: true,
+	}
+	for _, opt := range opts {
+		opt(&o)
+	}
 
 	k, err := key.marshal()
 	if err != nil {
@@ -218,12 +226,35 @@ func (s *{{$codeSafeName|untitle}}Storage) Incr(ctx context.Context,
 	}
 
 	v, err := s.r.IncrBy(ctx, k, int64(by)).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	switch {
+	case o.ttl != 0:
+		if o.keepTTL {
+			_, err = s.r.ExpireNX(ctx, k, o.ttl).Result()
+		} else {
+			_, err = s.r.Expire(ctx, k, o.ttl).Result()
+		}
+	case !o.exAt.IsZero():
+		_, err = s.r.ExpireAt(ctx, k, o.exAt).Result()
+	}
+
 	return int(v), err
 }
 {{end}}
 {{if $pairSpecs.ValueSpecs.NumericFloat}}
 func (s *{{$codeSafeName|untitle}}Storage) Incr(ctx context.Context,
-	key *{{$pairSpecs.KeySpecs.MessageName}}, by float64) (float64, error) {
+	key *{{$pairSpecs.KeySpecs.MessageName}}, by float64, opts ...{{$codeSafeName}}CallOption) (float64, error) {
+
+	o := {{$codeSafeName|untitle}}CallOptionContext{
+		get:     true,
+		keepTTL: true,
+	}
+	for _, opt := range opts {
+		opt(&o)
+	}
 
 	k, err := key.marshal()
 	if err != nil {
@@ -231,6 +262,21 @@ func (s *{{$codeSafeName|untitle}}Storage) Incr(ctx context.Context,
 	}
 
 	v, err := s.r.IncrByFloat(ctx, k, by).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	switch {
+	case o.ttl != 0:
+		if o.keepTTL {
+			_, err = s.r.ExpireNX(ctx, k, o.ttl).Result()
+		} else {
+			_, err = s.r.Expire(ctx, k, o.ttl).Result()
+		}
+	case !o.exAt.IsZero():
+		_, err = s.r.ExpireAt(ctx, k, o.exAt).Result()
+	}
+
 	return v, err
 }
 {{end}}

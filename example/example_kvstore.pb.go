@@ -234,7 +234,7 @@ type OnlineSessionsKVStore interface {
 	Set(context.Context, *OnlineSessionsKey,
 		*OnlineSessionsValue, ...OnlineSessionsCallOption) (*OnlineSessionsValue, error)
 	Del(context.Context, *OnlineSessionsKey) error
-	Incr(context.Context, *OnlineSessionsKey, int) (int, error)
+	Incr(context.Context, *OnlineSessionsKey, int, ...OnlineSessionsCallOption) (int, error)
 }
 
 type onlineSessionsCallOptionContext struct {
@@ -420,7 +420,15 @@ func (s *onlineSessionsStorage) Del(ctx context.Context, key *OnlineSessionsKey)
 }
 
 func (s *onlineSessionsStorage) Incr(ctx context.Context,
-	key *OnlineSessionsKey, by int) (int, error) {
+	key *OnlineSessionsKey, by int, opts ...OnlineSessionsCallOption) (int, error) {
+
+	o := onlineSessionsCallOptionContext{
+		get:     true,
+		keepTTL: true,
+	}
+	for _, opt := range opts {
+		opt(&o)
+	}
 
 	k, err := key.marshal()
 	if err != nil {
@@ -428,6 +436,21 @@ func (s *onlineSessionsStorage) Incr(ctx context.Context,
 	}
 
 	v, err := s.r.IncrBy(ctx, k, int64(by)).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	switch {
+	case o.ttl != 0:
+		if o.keepTTL {
+			_, err = s.r.ExpireNX(ctx, k, o.ttl).Result()
+		} else {
+			_, err = s.r.Expire(ctx, k, o.ttl).Result()
+		}
+	case !o.exAt.IsZero():
+		_, err = s.r.ExpireAt(ctx, k, o.exAt).Result()
+	}
+
 	return int(v), err
 }
 
