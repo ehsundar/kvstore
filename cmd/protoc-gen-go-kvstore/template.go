@@ -54,6 +54,7 @@ type valueSpecs struct {
 	MessageName  string
 	NumericInt   bool
 	NumericFloat bool
+	NumericType  string
 }
 
 func Render(templateContext kvstoreTemplateContext) (string, error) {

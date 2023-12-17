@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/ehsundar/kvstore"
 	"github.com/redis/go-redis/v9"
@@ -166,11 +167,11 @@ func (msg *ValueForStaticKey) unmarshal(value string) error {
 // storage interface
 
 type OnlineSessionsKVStore interface {
-	Get(context.Context, *OnlineSessionsKey, ...kvstore.GetOption) (*OnlineSessionsValue, error)
+	Get(context.Context, *OnlineSessionsKey, ...kvstore.GetOption) (int64, error)
 	Set(context.Context, *OnlineSessionsKey,
-		*OnlineSessionsValue, ...kvstore.SetOption) (*OnlineSessionsValue, error)
+		int64, ...kvstore.SetOption) (int64, error)
 	Del(context.Context, *OnlineSessionsKey) error
-	Incr(context.Context, *OnlineSessionsKey, int, ...kvstore.IncrOption) (int, error)
+	Incr(context.Context, *OnlineSessionsKey, int64, ...kvstore.IncrOption) (int64, error)
 }
 
 // storage construction
@@ -196,7 +197,7 @@ type onlineSessionsStorage struct {
 }
 
 func (s *onlineSessionsStorage) Get(
-	ctx context.Context, key *OnlineSessionsKey, opts ...kvstore.GetOption) (*OnlineSessionsValue, error) {
+	ctx context.Context, key *OnlineSessionsKey, opts ...kvstore.GetOption) (int64, error) {
 
 	var err error
 
@@ -207,7 +208,7 @@ func (s *onlineSessionsStorage) Get(
 
 	k, err := key.marshal()
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	var v string
@@ -224,20 +225,15 @@ func (s *onlineSessionsStorage) Get(
 	}
 
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	msg := &OnlineSessionsValue{}
-	err = msg.unmarshal(v)
-	if err != nil {
-		return nil, err
-	}
+	return strconv.ParseInt(v, 10, 64)
 
-	return msg, nil
 }
 
 func (s *onlineSessionsStorage) Set(ctx context.Context, key *OnlineSessionsKey,
-	value *OnlineSessionsValue, opts ...kvstore.SetOption) (*OnlineSessionsValue, error) {
+	value int64, opts ...kvstore.SetOption) (int64, error) {
 
 	o := kvstore.SetOptionContext{
 		Get:     true,
@@ -249,14 +245,10 @@ func (s *onlineSessionsStorage) Set(ctx context.Context, key *OnlineSessionsKey,
 
 	k, err := key.marshal()
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	mv, err := value.marshal()
-	if err != nil {
-		return nil, err
-	}
-
+	mv := fmt.Sprintf("%v", value)
 	v, err := s.r.SetArgs(ctx, k, mv, redis.SetArgs{
 		Mode:     o.Mode,
 		TTL:      o.TTL,
@@ -265,19 +257,16 @@ func (s *onlineSessionsStorage) Set(ctx context.Context, key *OnlineSessionsKey,
 		KeepTTL:  o.KeepTTL,
 	}).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
-		return nil, err
+		return 0, err
 	}
 
 	if v != "" {
-		msg := &OnlineSessionsValue{}
-		err = msg.unmarshal(v)
-		if err != nil {
-			return nil, err
-		}
-		return msg, nil
+
+		return strconv.ParseInt(v, 10, 64)
+
 	}
 
-	return nil, nil
+	return 0, nil
 }
 
 func (s *onlineSessionsStorage) Del(ctx context.Context, key *OnlineSessionsKey) error {
@@ -292,7 +281,7 @@ func (s *onlineSessionsStorage) Del(ctx context.Context, key *OnlineSessionsKey)
 }
 
 func (s *onlineSessionsStorage) Incr(ctx context.Context,
-	key *OnlineSessionsKey, by int, opts ...kvstore.IncrOption) (int, error) {
+	key *OnlineSessionsKey, by int64, opts ...kvstore.IncrOption) (int64, error) {
 
 	o := kvstore.IncrOptionContext{}
 	for _, opt := range opts {
@@ -304,7 +293,7 @@ func (s *onlineSessionsStorage) Incr(ctx context.Context,
 		return 0, err
 	}
 
-	v, err := s.r.IncrBy(ctx, k, int64(by)).Result()
+	v, err := s.r.IncrBy(ctx, k, by).Result()
 	if err != nil {
 		return 0, err
 	}
@@ -320,7 +309,7 @@ func (s *onlineSessionsStorage) Incr(ctx context.Context,
 		_, err = s.r.ExpireAt(ctx, k, o.ExAt).Result()
 	}
 
-	return int(v), err
+	return v, err
 }
 
 // message marshallers

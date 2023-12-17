@@ -5,6 +5,7 @@ import (
 	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/keymode"
 	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/optparse"
 	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/valuemode"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/iancoleman/strcase"
 	log "github.com/sirupsen/logrus"
@@ -49,6 +50,11 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 			panic(err)
 		}
 
+		var valueKind protoreflect.Kind
+		if valueMode == valuemode.NumericInt || valueMode == valuemode.NumericFloat {
+			valueKind = pair.ValueDesc.Fields().Get(0).Kind()
+		}
+
 		templateCtx.Pairs[name] = storagePair{
 			CodeSafeName: strcase.ToCamel(name),
 			KeySpecs: keySpecs{
@@ -59,8 +65,9 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 			ValueSpecs: valueSpecs{
 				Opts:         pair.ValueOptions,
 				MessageName:  string(pair.ValueDesc.Name()),
-				NumericInt:   valueMode == valuemode.ValueModeNumericInt,
-				NumericFloat: valueMode == valuemode.ValueModeNumericFloat,
+				NumericInt:   valueMode == valuemode.NumericInt,
+				NumericFloat: valueMode == valuemode.NumericFloat,
+				NumericType:  protoKindToGoType(valueKind),
 			},
 		}
 	}
@@ -80,4 +87,24 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 	}
 
 	return
+}
+
+func protoKindToGoType(k protoreflect.Kind) string {
+	switch k {
+	case protoreflect.FloatKind:
+		return "float32"
+	case protoreflect.DoubleKind:
+		return "float64"
+	case protoreflect.Int32Kind:
+		return "int32"
+	case protoreflect.Int64Kind:
+		return "int64"
+	case protoreflect.Uint32Kind:
+		return "uint32"
+	case protoreflect.Uint64Kind:
+		return "uint64"
+	default:
+		// TODO: Handle all proto types
+		return ""
+	}
 }

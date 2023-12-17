@@ -12,9 +12,9 @@ var (
 )
 
 const (
-	ValueModeGeneral = iota
-	ValueModeNumericInt
-	ValueModeNumericFloat
+	General = iota
+	NumericInt
+	NumericFloat
 )
 
 type ValueMode int
@@ -22,7 +22,7 @@ type ValueMode int
 func GetValueMode(o *kvstore.KVStoreValueOptions, d protoreflect.MessageDescriptor) (ValueMode, error) {
 	switch o.Mode.(type) {
 	case *kvstore.KVStoreValueOptions_General:
-		return ValueModeGeneral, nil
+		return General, nil
 	case *kvstore.KVStoreValueOptions_Numeral:
 		if d.Fields().Len() != 1 {
 			return 0, ErrMsgNoOneNumericField
@@ -35,13 +35,13 @@ func GetValueMode(o *kvstore.KVStoreValueOptions, d protoreflect.MessageDescript
 			protoreflect.Fixed32Kind, protoreflect.Fixed64Kind,
 			protoreflect.Sfixed32Kind, protoreflect.Sfixed64Kind:
 
-			return ValueModeNumericInt, nil
+			return NumericInt, nil
 		case protoreflect.FloatKind, protoreflect.DoubleKind:
-			return ValueModeNumericFloat, nil
+			return NumericFloat, nil
 		default:
 			return 0, ErrMsgNoOneNumericField
 		}
 	default:
-		return ValueModeGeneral, nil
+		return General, nil
 	}
 }
