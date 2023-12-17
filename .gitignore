@@ -20,5 +20,5 @@
 # Go workspace file
 go.work
 
-protoc-gen-go-kvstore
+/protoc-gen-go-kvstore
 *.log
