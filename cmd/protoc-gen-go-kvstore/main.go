@@ -1,8 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"go/format"
+	"os"
 
 	"github.com/iancoleman/strcase"
 	log "github.com/sirupsen/logrus"
@@ -18,6 +20,12 @@ import (
 func main() {
 	setupLogger()
 	log.Infof("started protoc-gen-go-kvstore plugin")
+
+	if len(os.Args) > 1 {
+		flag.BoolFunc("version", "print protoc-gen-go-kvstore version", printVersion)
+		flag.Parse()
+		return
+	}
 
 	protogen.Options{}.Run(func(gen *protogen.Plugin) error {
 		for _, f := range gen.Files {
