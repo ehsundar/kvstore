@@ -8,9 +8,13 @@ import (
 )
 
 func setupLogger() {
+	logFile := os.Getenv("PROTOC_GEN_GO_KVSTORE_LOGS")
+	if logFile == "" {
+		logFile = "/dev/null"
+	}
 
 	// open a file
-	f, err := os.OpenFile("protoc-gen-go-kvstore.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		fmt.Printf("error opening file: %v", err)
 	}
