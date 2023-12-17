@@ -4,13 +4,13 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/keymode"
 	"strings"
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/samber/lo"
 
-	"github.com/ehsundar/kvstore/internal/keymode"
 	kvstoreProto "github.com/ehsundar/kvstore/protobuf/kvstore"
 )
 

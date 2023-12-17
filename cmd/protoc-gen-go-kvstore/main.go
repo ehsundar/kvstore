@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/keymode"
+	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/optparse"
+	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/valuemode"
 
 	"github.com/iancoleman/strcase"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/compiler/protogen"
-
-	"github.com/ehsundar/kvstore/internal/keymode"
-	"github.com/ehsundar/kvstore/internal/optparse"
-	"github.com/ehsundar/kvstore/internal/valuemode"
 )
 
 func main() {

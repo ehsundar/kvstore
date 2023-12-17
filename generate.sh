@@ -6,7 +6,7 @@ protoc \
   --go_out=. --go_opt=paths=source_relative \
   protobuf/kvstore/options.proto
 
-go build -o protoc-gen-go-kvstore "$(pwd)/cmd/kvstore"
+go build -o protoc-gen-go-kvstore "$(pwd)/cmd/protoc-gen-go-kvstore"
 
 protoc \
   --plugin=protoc-gen-go-kvstore=./protoc-gen-go-kvstore \
