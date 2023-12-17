@@ -7,6 +7,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
+	"github.com/ehsundar/kvstore"
 	"github.com/ehsundar/kvstore/example"
 )
 
@@ -33,7 +34,7 @@ func main() {
 			Items: []int32{1, 2, 3},
 		},
 	},
-		example.WithFeatureXSetTTL(10*time.Second),
+		kvstore.WithSetTTL(10*time.Second),
 	)
 	if err != nil {
 		panic(err)
@@ -61,7 +62,7 @@ func main() {
 		Count: 10,
 		Limit: 100,
 	},
-		example.WithRateLimitSetTTL(10*time.Second),
+		kvstore.WithSetTTL(10*time.Second),
 	)
 	if err != nil {
 		panic(err)
@@ -80,7 +81,7 @@ func main() {
 
 	sessions := example.NewOnlineSessionsStore(r)
 	current, err := sessions.Incr(ctx, &example.OnlineSessionsKey{}, 2,
-		example.WithOnlineSessionsIncrTTL(10*time.Second, true),
+		kvstore.WithIncrTTL(10*time.Second, true),
 	)
 	if err != nil {
 		panic(err)

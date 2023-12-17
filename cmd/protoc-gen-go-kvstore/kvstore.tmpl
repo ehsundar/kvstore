@@ -7,8 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
+	"github.com/ehsundar/kvstore"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -19,124 +19,19 @@ import (
 // storage interface
 
 type {{$codeSafeName}}KVStore interface {
-	Get(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, ...{{$codeSafeName}}GetOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error)
+	Get(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, ...kvstore.GetOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error)
 	Set(context.Context, *{{$pairSpecs.KeySpecs.MessageName}},
-		*{{$pairSpecs.ValueSpecs.MessageName}}, ...{{$codeSafeName}}SetOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error)
+		*{{$pairSpecs.ValueSpecs.MessageName}}, ...kvstore.SetOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error)
 	Del(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}) error
-	{{if $pairSpecs.ValueSpecs.NumericInt}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, int, ...{{$codeSafeName}}IncrOption) (int, error){{end}}
-	{{if $pairSpecs.ValueSpecs.NumericFloat}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, float64, ...{{$codeSafeName}}IncrOption) (float64, error){{end}}
+	{{if $pairSpecs.ValueSpecs.NumericInt}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, int, ...kvstore.IncrOption) (int, error){{end}}
+	{{if $pairSpecs.ValueSpecs.NumericFloat}}Incr(context.Context, *{{$pairSpecs.KeySpecs.MessageName}}, float64, ...kvstore.IncrOption) (float64, error){{end}}
 }
-
-// get options
-type {{$codeSafeName|untitle}}GetOptionContext struct{
-	ttl  time.Duration
-	exAt time.Time
-	del  bool
-}
-
-type {{$codeSafeName}}GetOption func(o *{{$codeSafeName|untitle}}GetOptionContext)
-
-func With{{$codeSafeName}}GetTTL(ttl time.Duration) {{$codeSafeName}}GetOption {
-	return func(o *{{$codeSafeName|untitle}}GetOptionContext) {
-		o.ttl = ttl
-		o.exAt = time.Time{}
-		o.del = false
-	}
-}
-
-func With{{$codeSafeName}}GetExpireAt(eat time.Time) {{$codeSafeName}}GetOption {
-	return func(o *{{$codeSafeName|untitle}}GetOptionContext) {
-		o.exAt = eat
-		o.ttl = 0
-		o.del = false
-	}
-}
-
-func With{{$codeSafeName}}Del() {{$codeSafeName}}GetOption {
-	return func(o *{{$codeSafeName|untitle}}GetOptionContext) {
-		o.del = true
-		o.ttl = 0
-		o.exAt = time.Time{}
-	}
-}
-
-// set options
-type {{$codeSafeName|untitle}}SetOptionContext struct{
-	ttl     time.Duration
-	exAt    time.Time
-	mode    string
-	get     bool
-	keepTTL bool
-}
-
-type {{$codeSafeName}}SetOption func(o *{{$codeSafeName|untitle}}SetOptionContext)
-
-func With{{$codeSafeName}}SetOnlyIfNotExists() {{$codeSafeName}}SetOption {
-	return func(o *{{$codeSafeName|untitle}}SetOptionContext) {
-		o.mode = "NX"
-	}
-}
-
-func With{{$codeSafeName}}SetOnlyIfAlreadyExists() {{$codeSafeName}}SetOption {
-	return func(o *{{$codeSafeName|untitle}}SetOptionContext) {
-		o.mode = "XX"
-	}
-}
-
-func With{{$codeSafeName}}RetieveDisabled() {{$codeSafeName}}SetOption {
-	return func(o *{{$codeSafeName|untitle}}SetOptionContext) {
-		o.get = false
-	}
-}
-
-func With{{$codeSafeName}}SetTTL(ttl time.Duration) {{$codeSafeName}}SetOption {
-	return func(o *{{$codeSafeName|untitle}}SetOptionContext) {
-		o.ttl = ttl
-		o.exAt = time.Time{}
-		o.keepTTL = false
-	}
-}
-
-func With{{$codeSafeName}}SetExpireAt(eat time.Time) {{$codeSafeName}}SetOption {
-	return func(o *{{$codeSafeName|untitle}}SetOptionContext) {
-		o.exAt = eat
-		o.ttl = 0
-		o.keepTTL = false
-	}
-}
-
-{{if or $pairSpecs.ValueSpecs.NumericInt $pairSpecs.ValueSpecs.NumericFloat}}
-// incr options
-type {{$codeSafeName|untitle}}IncrOptionContext struct{
-	ttl  time.Duration
-	exAt time.Time
-	keepTTL bool
-}
-
-type {{$codeSafeName}}IncrOption func(o *{{$codeSafeName|untitle}}IncrOptionContext)
-
-func With{{$codeSafeName}}IncrTTL(ttl time.Duration, keepTTL bool) {{$codeSafeName}}IncrOption {
-	return func(o *{{$codeSafeName|untitle}}IncrOptionContext) {
-		o.ttl = ttl
-		o.keepTTL = keepTTL
-		o.exAt = time.Time{}
-	}
-}
-
-func With{{$codeSafeName}}IncrExpireAt(eat time.Time) {{$codeSafeName}}IncrOption {
-	return func(o *{{$codeSafeName|untitle}}IncrOptionContext) {
-		o.exAt = eat
-		o.ttl = 0
-		o.keepTTL = false
-	}
-}
-{{end}}
 
 // storage construction
 
-func New{{$codeSafeName}}Store(r redis.Cmdable, opts ...{{$codeSafeName|untitle}}Option) {{$codeSafeName}}KVStore {
-	oc := {{$codeSafeName|untitle}}OptionContext{}
+func New{{$codeSafeName}}Store(r redis.Cmdable, opts ...kvstore.InitOption) {{$codeSafeName}}KVStore {
 
+	oc := kvstore.InitOptionContext{}
 	for _, opt := range opts {
 		opt(&oc)
 	}
@@ -147,23 +42,19 @@ func New{{$codeSafeName}}Store(r redis.Cmdable, opts ...{{$codeSafeName|untitle}
 	}
 }
 
-type {{$codeSafeName|untitle}}OptionContext struct{}
-
-type {{$codeSafeName|untitle}}Option func(o *{{$codeSafeName|untitle}}OptionContext)
-
 // storage implementation
 
 type {{$codeSafeName|untitle}}Storage struct {
 	r    redis.Cmdable
-	opts {{$codeSafeName|untitle}}OptionContext
+	opts kvstore.InitOptionContext
 }
 
 func (s *{{$codeSafeName|untitle}}Storage) Get(
-	ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}}, opts ...{{$codeSafeName}}GetOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error) {
+	ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}}, opts ...kvstore.GetOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error) {
 
 	var err error
 
-	o := {{$codeSafeName|untitle}}GetOptionContext{}
+	o := kvstore.GetOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -175,11 +66,11 @@ func (s *{{$codeSafeName|untitle}}Storage) Get(
 
 	var v string
 	switch {
-	case o.del:
+	case o.Del:
 		v, err = s.r.GetDel(ctx, k).Result()
-	case o.ttl != 0:
-		v, err = s.r.GetEx(ctx, k, o.ttl).Result()
-	case !o.exAt.IsZero():
+	case o.TTL != 0:
+		v, err = s.r.GetEx(ctx, k, o.TTL).Result()
+	case !o.ExAt.IsZero():
 		// TODO: PR to go-redis for exAt
 		err = errors.New("exat is not supported by go-redis")
 	default:
@@ -200,11 +91,11 @@ func (s *{{$codeSafeName|untitle}}Storage) Get(
 }
 
 func (s *{{$codeSafeName|untitle}}Storage) Set(ctx context.Context, key *{{$pairSpecs.KeySpecs.MessageName}},
-	value *{{$pairSpecs.ValueSpecs.MessageName}}, opts ...{{$codeSafeName}}SetOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error) {
+	value *{{$pairSpecs.ValueSpecs.MessageName}}, opts ...kvstore.SetOption) (*{{$pairSpecs.ValueSpecs.MessageName}}, error) {
 
-	o := {{$codeSafeName|untitle}}SetOptionContext{
-		get:     true,
-		keepTTL: true,
+	o := kvstore.SetOptionContext{
+		Get:     true,
+		KeepTTL: true,
 	}
 	for _, opt := range opts {
 		opt(&o)
@@ -221,11 +112,11 @@ func (s *{{$codeSafeName|untitle}}Storage) Set(ctx context.Context, key *{{$pair
 	}
 
 	v, err := s.r.SetArgs(ctx, k, mv, redis.SetArgs{
-		Mode:     o.mode,
-		TTL:      o.ttl,
-		ExpireAt: o.exAt,
-		Get:      o.get,
-		KeepTTL:  o.keepTTL,
+		Mode:     o.Mode,
+		TTL:      o.TTL,
+		ExpireAt: o.ExAt,
+		Get:      o.Get,
+		KeepTTL:  o.KeepTTL,
 	}).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, err
@@ -255,9 +146,9 @@ func (s *{{$codeSafeName|untitle}}Storage) Del(ctx context.Context, key *{{$pair
 }
 {{if $pairSpecs.ValueSpecs.NumericInt}}
 func (s *{{$codeSafeName|untitle}}Storage) Incr(ctx context.Context,
-	key *{{$pairSpecs.KeySpecs.MessageName}}, by int, opts ...{{$codeSafeName}}IncrOption) (int, error) {
+	key *{{$pairSpecs.KeySpecs.MessageName}}, by int, opts ...kvstore.IncrOption) (int, error) {
 
-	o := {{$codeSafeName|untitle}}IncrOptionContext{}
+	o := kvstore.IncrOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -273,14 +164,14 @@ func (s *{{$codeSafeName|untitle}}Storage) Incr(ctx context.Context,
 	}
 
 	switch {
-	case o.ttl != 0:
-		if o.keepTTL {
-			_, err = s.r.ExpireNX(ctx, k, o.ttl).Result()
+	case o.TTL != 0:
+		if o.KeepTTL {
+			_, err = s.r.ExpireNX(ctx, k, o.TTL).Result()
 		} else {
-			_, err = s.r.Expire(ctx, k, o.ttl).Result()
+			_, err = s.r.Expire(ctx, k, o.TTL).Result()
 		}
-	case !o.exAt.IsZero():
-		_, err = s.r.ExpireAt(ctx, k, o.exAt).Result()
+	case !o.ExAt.IsZero():
+		_, err = s.r.ExpireAt(ctx, k, o.ExAt).Result()
 	}
 
 	return int(v), err
@@ -288,11 +179,11 @@ func (s *{{$codeSafeName|untitle}}Storage) Incr(ctx context.Context,
 {{end}}
 {{if $pairSpecs.ValueSpecs.NumericFloat}}
 func (s *{{$codeSafeName|untitle}}Storage) Incr(ctx context.Context,
-	key *{{$pairSpecs.KeySpecs.MessageName}}, by float64, opts ...{{$codeSafeName}}CallOption) (float64, error) {
+	key *{{$pairSpecs.KeySpecs.MessageName}}, by float64, opts ...kvstore.IncrOption) (float64, error) {
 
-	o := {{$codeSafeName|untitle}}CallOptionContext{
-		get:     true,
-		keepTTL: true,
+	o := kvstore.IncrOptionContext{
+		Get:     true,
+		KeepTTL: true,
 	}
 	for _, opt := range opts {
 		opt(&o)
@@ -309,14 +200,14 @@ func (s *{{$codeSafeName|untitle}}Storage) Incr(ctx context.Context,
 	}
 
 	switch {
-	case o.ttl != 0:
-		if o.keepTTL {
-			_, err = s.r.ExpireNX(ctx, k, o.ttl).Result()
+	case o.TTL != 0:
+		if o.KeepTTL {
+			_, err = s.r.ExpireNX(ctx, k, o.TTL).Result()
 		} else {
-			_, err = s.r.Expire(ctx, k, o.ttl).Result()
+			_, err = s.r.Expire(ctx, k, o.TTL).Result()
 		}
-	case !o.exAt.IsZero():
-		_, err = s.r.ExpireAt(ctx, k, o.exAt).Result()
+	case !o.ExAt.IsZero():
+		_, err = s.r.ExpireAt(ctx, k, o.ExAt).Result()
 	}
 
 	return v, err

@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
+	"github.com/ehsundar/kvstore"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -16,95 +16,17 @@ import (
 // storage interface
 
 type FeatureXKVStore interface {
-	Get(context.Context, *StaticKey, ...FeatureXGetOption) (*ValueForStaticKey, error)
+	Get(context.Context, *StaticKey, ...kvstore.GetOption) (*ValueForStaticKey, error)
 	Set(context.Context, *StaticKey,
-		*ValueForStaticKey, ...FeatureXSetOption) (*ValueForStaticKey, error)
+		*ValueForStaticKey, ...kvstore.SetOption) (*ValueForStaticKey, error)
 	Del(context.Context, *StaticKey) error
-}
-
-// get options
-type featureXGetOptionContext struct {
-	ttl  time.Duration
-	exAt time.Time
-	del  bool
-}
-
-type FeatureXGetOption func(o *featureXGetOptionContext)
-
-func WithFeatureXGetTTL(ttl time.Duration) FeatureXGetOption {
-	return func(o *featureXGetOptionContext) {
-		o.ttl = ttl
-		o.exAt = time.Time{}
-		o.del = false
-	}
-}
-
-func WithFeatureXGetExpireAt(eat time.Time) FeatureXGetOption {
-	return func(o *featureXGetOptionContext) {
-		o.exAt = eat
-		o.ttl = 0
-		o.del = false
-	}
-}
-
-func WithFeatureXDel() FeatureXGetOption {
-	return func(o *featureXGetOptionContext) {
-		o.del = true
-		o.ttl = 0
-		o.exAt = time.Time{}
-	}
-}
-
-// set options
-type featureXSetOptionContext struct {
-	ttl     time.Duration
-	exAt    time.Time
-	mode    string
-	get     bool
-	keepTTL bool
-}
-
-type FeatureXSetOption func(o *featureXSetOptionContext)
-
-func WithFeatureXSetOnlyIfNotExists() FeatureXSetOption {
-	return func(o *featureXSetOptionContext) {
-		o.mode = "NX"
-	}
-}
-
-func WithFeatureXSetOnlyIfAlreadyExists() FeatureXSetOption {
-	return func(o *featureXSetOptionContext) {
-		o.mode = "XX"
-	}
-}
-
-func WithFeatureXRetieveDisabled() FeatureXSetOption {
-	return func(o *featureXSetOptionContext) {
-		o.get = false
-	}
-}
-
-func WithFeatureXSetTTL(ttl time.Duration) FeatureXSetOption {
-	return func(o *featureXSetOptionContext) {
-		o.ttl = ttl
-		o.exAt = time.Time{}
-		o.keepTTL = false
-	}
-}
-
-func WithFeatureXSetExpireAt(eat time.Time) FeatureXSetOption {
-	return func(o *featureXSetOptionContext) {
-		o.exAt = eat
-		o.ttl = 0
-		o.keepTTL = false
-	}
 }
 
 // storage construction
 
-func NewFeatureXStore(r redis.Cmdable, opts ...featureXOption) FeatureXKVStore {
-	oc := featureXOptionContext{}
+func NewFeatureXStore(r redis.Cmdable, opts ...kvstore.InitOption) FeatureXKVStore {
 
+	oc := kvstore.InitOptionContext{}
 	for _, opt := range opts {
 		opt(&oc)
 	}
@@ -115,23 +37,19 @@ func NewFeatureXStore(r redis.Cmdable, opts ...featureXOption) FeatureXKVStore {
 	}
 }
 
-type featureXOptionContext struct{}
-
-type featureXOption func(o *featureXOptionContext)
-
 // storage implementation
 
 type featureXStorage struct {
 	r    redis.Cmdable
-	opts featureXOptionContext
+	opts kvstore.InitOptionContext
 }
 
 func (s *featureXStorage) Get(
-	ctx context.Context, key *StaticKey, opts ...FeatureXGetOption) (*ValueForStaticKey, error) {
+	ctx context.Context, key *StaticKey, opts ...kvstore.GetOption) (*ValueForStaticKey, error) {
 
 	var err error
 
-	o := featureXGetOptionContext{}
+	o := kvstore.GetOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -143,11 +61,11 @@ func (s *featureXStorage) Get(
 
 	var v string
 	switch {
-	case o.del:
+	case o.Del:
 		v, err = s.r.GetDel(ctx, k).Result()
-	case o.ttl != 0:
-		v, err = s.r.GetEx(ctx, k, o.ttl).Result()
-	case !o.exAt.IsZero():
+	case o.TTL != 0:
+		v, err = s.r.GetEx(ctx, k, o.TTL).Result()
+	case !o.ExAt.IsZero():
 		// TODO: PR to go-redis for exAt
 		err = errors.New("exat is not supported by go-redis")
 	default:
@@ -168,11 +86,11 @@ func (s *featureXStorage) Get(
 }
 
 func (s *featureXStorage) Set(ctx context.Context, key *StaticKey,
-	value *ValueForStaticKey, opts ...FeatureXSetOption) (*ValueForStaticKey, error) {
+	value *ValueForStaticKey, opts ...kvstore.SetOption) (*ValueForStaticKey, error) {
 
-	o := featureXSetOptionContext{
-		get:     true,
-		keepTTL: true,
+	o := kvstore.SetOptionContext{
+		Get:     true,
+		KeepTTL: true,
 	}
 	for _, opt := range opts {
 		opt(&o)
@@ -189,11 +107,11 @@ func (s *featureXStorage) Set(ctx context.Context, key *StaticKey,
 	}
 
 	v, err := s.r.SetArgs(ctx, k, mv, redis.SetArgs{
-		Mode:     o.mode,
-		TTL:      o.ttl,
-		ExpireAt: o.exAt,
-		Get:      o.get,
-		KeepTTL:  o.keepTTL,
+		Mode:     o.Mode,
+		TTL:      o.TTL,
+		ExpireAt: o.ExAt,
+		Get:      o.Get,
+		KeepTTL:  o.KeepTTL,
 	}).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, err
@@ -248,121 +166,18 @@ func (msg *ValueForStaticKey) unmarshal(value string) error {
 // storage interface
 
 type OnlineSessionsKVStore interface {
-	Get(context.Context, *OnlineSessionsKey, ...OnlineSessionsGetOption) (*OnlineSessionsValue, error)
+	Get(context.Context, *OnlineSessionsKey, ...kvstore.GetOption) (*OnlineSessionsValue, error)
 	Set(context.Context, *OnlineSessionsKey,
-		*OnlineSessionsValue, ...OnlineSessionsSetOption) (*OnlineSessionsValue, error)
+		*OnlineSessionsValue, ...kvstore.SetOption) (*OnlineSessionsValue, error)
 	Del(context.Context, *OnlineSessionsKey) error
-	Incr(context.Context, *OnlineSessionsKey, int, ...OnlineSessionsIncrOption) (int, error)
-}
-
-// get options
-type onlineSessionsGetOptionContext struct {
-	ttl  time.Duration
-	exAt time.Time
-	del  bool
-}
-
-type OnlineSessionsGetOption func(o *onlineSessionsGetOptionContext)
-
-func WithOnlineSessionsGetTTL(ttl time.Duration) OnlineSessionsGetOption {
-	return func(o *onlineSessionsGetOptionContext) {
-		o.ttl = ttl
-		o.exAt = time.Time{}
-		o.del = false
-	}
-}
-
-func WithOnlineSessionsGetExpireAt(eat time.Time) OnlineSessionsGetOption {
-	return func(o *onlineSessionsGetOptionContext) {
-		o.exAt = eat
-		o.ttl = 0
-		o.del = false
-	}
-}
-
-func WithOnlineSessionsDel() OnlineSessionsGetOption {
-	return func(o *onlineSessionsGetOptionContext) {
-		o.del = true
-		o.ttl = 0
-		o.exAt = time.Time{}
-	}
-}
-
-// set options
-type onlineSessionsSetOptionContext struct {
-	ttl     time.Duration
-	exAt    time.Time
-	mode    string
-	get     bool
-	keepTTL bool
-}
-
-type OnlineSessionsSetOption func(o *onlineSessionsSetOptionContext)
-
-func WithOnlineSessionsSetOnlyIfNotExists() OnlineSessionsSetOption {
-	return func(o *onlineSessionsSetOptionContext) {
-		o.mode = "NX"
-	}
-}
-
-func WithOnlineSessionsSetOnlyIfAlreadyExists() OnlineSessionsSetOption {
-	return func(o *onlineSessionsSetOptionContext) {
-		o.mode = "XX"
-	}
-}
-
-func WithOnlineSessionsRetieveDisabled() OnlineSessionsSetOption {
-	return func(o *onlineSessionsSetOptionContext) {
-		o.get = false
-	}
-}
-
-func WithOnlineSessionsSetTTL(ttl time.Duration) OnlineSessionsSetOption {
-	return func(o *onlineSessionsSetOptionContext) {
-		o.ttl = ttl
-		o.exAt = time.Time{}
-		o.keepTTL = false
-	}
-}
-
-func WithOnlineSessionsSetExpireAt(eat time.Time) OnlineSessionsSetOption {
-	return func(o *onlineSessionsSetOptionContext) {
-		o.exAt = eat
-		o.ttl = 0
-		o.keepTTL = false
-	}
-}
-
-// incr options
-type onlineSessionsIncrOptionContext struct {
-	ttl     time.Duration
-	exAt    time.Time
-	keepTTL bool
-}
-
-type OnlineSessionsIncrOption func(o *onlineSessionsIncrOptionContext)
-
-func WithOnlineSessionsIncrTTL(ttl time.Duration, keepTTL bool) OnlineSessionsIncrOption {
-	return func(o *onlineSessionsIncrOptionContext) {
-		o.ttl = ttl
-		o.keepTTL = keepTTL
-		o.exAt = time.Time{}
-	}
-}
-
-func WithOnlineSessionsIncrExpireAt(eat time.Time) OnlineSessionsIncrOption {
-	return func(o *onlineSessionsIncrOptionContext) {
-		o.exAt = eat
-		o.ttl = 0
-		o.keepTTL = false
-	}
+	Incr(context.Context, *OnlineSessionsKey, int, ...kvstore.IncrOption) (int, error)
 }
 
 // storage construction
 
-func NewOnlineSessionsStore(r redis.Cmdable, opts ...onlineSessionsOption) OnlineSessionsKVStore {
-	oc := onlineSessionsOptionContext{}
+func NewOnlineSessionsStore(r redis.Cmdable, opts ...kvstore.InitOption) OnlineSessionsKVStore {
 
+	oc := kvstore.InitOptionContext{}
 	for _, opt := range opts {
 		opt(&oc)
 	}
@@ -373,23 +188,19 @@ func NewOnlineSessionsStore(r redis.Cmdable, opts ...onlineSessionsOption) Onlin
 	}
 }
 
-type onlineSessionsOptionContext struct{}
-
-type onlineSessionsOption func(o *onlineSessionsOptionContext)
-
 // storage implementation
 
 type onlineSessionsStorage struct {
 	r    redis.Cmdable
-	opts onlineSessionsOptionContext
+	opts kvstore.InitOptionContext
 }
 
 func (s *onlineSessionsStorage) Get(
-	ctx context.Context, key *OnlineSessionsKey, opts ...OnlineSessionsGetOption) (*OnlineSessionsValue, error) {
+	ctx context.Context, key *OnlineSessionsKey, opts ...kvstore.GetOption) (*OnlineSessionsValue, error) {
 
 	var err error
 
-	o := onlineSessionsGetOptionContext{}
+	o := kvstore.GetOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -401,11 +212,11 @@ func (s *onlineSessionsStorage) Get(
 
 	var v string
 	switch {
-	case o.del:
+	case o.Del:
 		v, err = s.r.GetDel(ctx, k).Result()
-	case o.ttl != 0:
-		v, err = s.r.GetEx(ctx, k, o.ttl).Result()
-	case !o.exAt.IsZero():
+	case o.TTL != 0:
+		v, err = s.r.GetEx(ctx, k, o.TTL).Result()
+	case !o.ExAt.IsZero():
 		// TODO: PR to go-redis for exAt
 		err = errors.New("exat is not supported by go-redis")
 	default:
@@ -426,11 +237,11 @@ func (s *onlineSessionsStorage) Get(
 }
 
 func (s *onlineSessionsStorage) Set(ctx context.Context, key *OnlineSessionsKey,
-	value *OnlineSessionsValue, opts ...OnlineSessionsSetOption) (*OnlineSessionsValue, error) {
+	value *OnlineSessionsValue, opts ...kvstore.SetOption) (*OnlineSessionsValue, error) {
 
-	o := onlineSessionsSetOptionContext{
-		get:     true,
-		keepTTL: true,
+	o := kvstore.SetOptionContext{
+		Get:     true,
+		KeepTTL: true,
 	}
 	for _, opt := range opts {
 		opt(&o)
@@ -447,11 +258,11 @@ func (s *onlineSessionsStorage) Set(ctx context.Context, key *OnlineSessionsKey,
 	}
 
 	v, err := s.r.SetArgs(ctx, k, mv, redis.SetArgs{
-		Mode:     o.mode,
-		TTL:      o.ttl,
-		ExpireAt: o.exAt,
-		Get:      o.get,
-		KeepTTL:  o.keepTTL,
+		Mode:     o.Mode,
+		TTL:      o.TTL,
+		ExpireAt: o.ExAt,
+		Get:      o.Get,
+		KeepTTL:  o.KeepTTL,
 	}).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, err
@@ -481,9 +292,9 @@ func (s *onlineSessionsStorage) Del(ctx context.Context, key *OnlineSessionsKey)
 }
 
 func (s *onlineSessionsStorage) Incr(ctx context.Context,
-	key *OnlineSessionsKey, by int, opts ...OnlineSessionsIncrOption) (int, error) {
+	key *OnlineSessionsKey, by int, opts ...kvstore.IncrOption) (int, error) {
 
-	o := onlineSessionsIncrOptionContext{}
+	o := kvstore.IncrOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -499,14 +310,14 @@ func (s *onlineSessionsStorage) Incr(ctx context.Context,
 	}
 
 	switch {
-	case o.ttl != 0:
-		if o.keepTTL {
-			_, err = s.r.ExpireNX(ctx, k, o.ttl).Result()
+	case o.TTL != 0:
+		if o.KeepTTL {
+			_, err = s.r.ExpireNX(ctx, k, o.TTL).Result()
 		} else {
-			_, err = s.r.Expire(ctx, k, o.ttl).Result()
+			_, err = s.r.Expire(ctx, k, o.TTL).Result()
 		}
-	case !o.exAt.IsZero():
-		_, err = s.r.ExpireAt(ctx, k, o.exAt).Result()
+	case !o.ExAt.IsZero():
+		_, err = s.r.ExpireAt(ctx, k, o.ExAt).Result()
 	}
 
 	return int(v), err
@@ -538,95 +349,17 @@ func (msg *OnlineSessionsValue) unmarshal(value string) error {
 // storage interface
 
 type RateLimitKVStore interface {
-	Get(context.Context, *DynamicKey, ...RateLimitGetOption) (*RateLimitCount, error)
+	Get(context.Context, *DynamicKey, ...kvstore.GetOption) (*RateLimitCount, error)
 	Set(context.Context, *DynamicKey,
-		*RateLimitCount, ...RateLimitSetOption) (*RateLimitCount, error)
+		*RateLimitCount, ...kvstore.SetOption) (*RateLimitCount, error)
 	Del(context.Context, *DynamicKey) error
-}
-
-// get options
-type rateLimitGetOptionContext struct {
-	ttl  time.Duration
-	exAt time.Time
-	del  bool
-}
-
-type RateLimitGetOption func(o *rateLimitGetOptionContext)
-
-func WithRateLimitGetTTL(ttl time.Duration) RateLimitGetOption {
-	return func(o *rateLimitGetOptionContext) {
-		o.ttl = ttl
-		o.exAt = time.Time{}
-		o.del = false
-	}
-}
-
-func WithRateLimitGetExpireAt(eat time.Time) RateLimitGetOption {
-	return func(o *rateLimitGetOptionContext) {
-		o.exAt = eat
-		o.ttl = 0
-		o.del = false
-	}
-}
-
-func WithRateLimitDel() RateLimitGetOption {
-	return func(o *rateLimitGetOptionContext) {
-		o.del = true
-		o.ttl = 0
-		o.exAt = time.Time{}
-	}
-}
-
-// set options
-type rateLimitSetOptionContext struct {
-	ttl     time.Duration
-	exAt    time.Time
-	mode    string
-	get     bool
-	keepTTL bool
-}
-
-type RateLimitSetOption func(o *rateLimitSetOptionContext)
-
-func WithRateLimitSetOnlyIfNotExists() RateLimitSetOption {
-	return func(o *rateLimitSetOptionContext) {
-		o.mode = "NX"
-	}
-}
-
-func WithRateLimitSetOnlyIfAlreadyExists() RateLimitSetOption {
-	return func(o *rateLimitSetOptionContext) {
-		o.mode = "XX"
-	}
-}
-
-func WithRateLimitRetieveDisabled() RateLimitSetOption {
-	return func(o *rateLimitSetOptionContext) {
-		o.get = false
-	}
-}
-
-func WithRateLimitSetTTL(ttl time.Duration) RateLimitSetOption {
-	return func(o *rateLimitSetOptionContext) {
-		o.ttl = ttl
-		o.exAt = time.Time{}
-		o.keepTTL = false
-	}
-}
-
-func WithRateLimitSetExpireAt(eat time.Time) RateLimitSetOption {
-	return func(o *rateLimitSetOptionContext) {
-		o.exAt = eat
-		o.ttl = 0
-		o.keepTTL = false
-	}
 }
 
 // storage construction
 
-func NewRateLimitStore(r redis.Cmdable, opts ...rateLimitOption) RateLimitKVStore {
-	oc := rateLimitOptionContext{}
+func NewRateLimitStore(r redis.Cmdable, opts ...kvstore.InitOption) RateLimitKVStore {
 
+	oc := kvstore.InitOptionContext{}
 	for _, opt := range opts {
 		opt(&oc)
 	}
@@ -637,23 +370,19 @@ func NewRateLimitStore(r redis.Cmdable, opts ...rateLimitOption) RateLimitKVStor
 	}
 }
 
-type rateLimitOptionContext struct{}
-
-type rateLimitOption func(o *rateLimitOptionContext)
-
 // storage implementation
 
 type rateLimitStorage struct {
 	r    redis.Cmdable
-	opts rateLimitOptionContext
+	opts kvstore.InitOptionContext
 }
 
 func (s *rateLimitStorage) Get(
-	ctx context.Context, key *DynamicKey, opts ...RateLimitGetOption) (*RateLimitCount, error) {
+	ctx context.Context, key *DynamicKey, opts ...kvstore.GetOption) (*RateLimitCount, error) {
 
 	var err error
 
-	o := rateLimitGetOptionContext{}
+	o := kvstore.GetOptionContext{}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -665,11 +394,11 @@ func (s *rateLimitStorage) Get(
 
 	var v string
 	switch {
-	case o.del:
+	case o.Del:
 		v, err = s.r.GetDel(ctx, k).Result()
-	case o.ttl != 0:
-		v, err = s.r.GetEx(ctx, k, o.ttl).Result()
-	case !o.exAt.IsZero():
+	case o.TTL != 0:
+		v, err = s.r.GetEx(ctx, k, o.TTL).Result()
+	case !o.ExAt.IsZero():
 		// TODO: PR to go-redis for exAt
 		err = errors.New("exat is not supported by go-redis")
 	default:
@@ -690,11 +419,11 @@ func (s *rateLimitStorage) Get(
 }
 
 func (s *rateLimitStorage) Set(ctx context.Context, key *DynamicKey,
-	value *RateLimitCount, opts ...RateLimitSetOption) (*RateLimitCount, error) {
+	value *RateLimitCount, opts ...kvstore.SetOption) (*RateLimitCount, error) {
 
-	o := rateLimitSetOptionContext{
-		get:     true,
-		keepTTL: true,
+	o := kvstore.SetOptionContext{
+		Get:     true,
+		KeepTTL: true,
 	}
 	for _, opt := range opts {
 		opt(&o)
@@ -711,11 +440,11 @@ func (s *rateLimitStorage) Set(ctx context.Context, key *DynamicKey,
 	}
 
 	v, err := s.r.SetArgs(ctx, k, mv, redis.SetArgs{
-		Mode:     o.mode,
-		TTL:      o.ttl,
-		ExpireAt: o.exAt,
-		Get:      o.get,
-		KeepTTL:  o.keepTTL,
+		Mode:     o.Mode,
+		TTL:      o.TTL,
+		ExpireAt: o.ExAt,
+		Get:      o.Get,
+		KeepTTL:  o.KeepTTL,
 	}).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, err
