@@ -2,14 +2,17 @@ package main
 
 import (
 	"fmt"
-	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/keymode"
-	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/optparse"
-	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/valuemode"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	"go/format"
 
 	"github.com/iancoleman/strcase"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/tools/imports"
 	"google.golang.org/protobuf/compiler/protogen"
+	"google.golang.org/protobuf/reflect/protoreflect"
+
+	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/keymode"
+	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/optparse"
+	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/valuemode"
 )
 
 func main() {
@@ -78,9 +81,14 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 		return
 	}
 
+	fmtValue, err := formatGoCode([]byte(value))
+	if err != nil {
+		panic(err)
+	}
+
 	filename := file.GeneratedFilenamePrefix + "_kvstore.pb.go"
 	g := gen.NewGeneratedFile(filename, file.GoImportPath)
-	_, err = g.Write([]byte(value))
+	_, err = g.Write(fmtValue)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		return
@@ -107,4 +115,19 @@ func protoKindToGoType(k protoreflect.Kind) string {
 		// TODO: Handle all proto types
 		return ""
 	}
+}
+
+func formatGoCode(code []byte) ([]byte, error) {
+	formatted, err := format.Source([]byte(code))
+	if err != nil {
+		return []byte{}, err
+	}
+
+	options := &imports.Options{Comments: true, TabIndent: true, TabWidth: 8}
+	formatted, err = imports.Process("", formatted, options)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return formatted, nil
 }
