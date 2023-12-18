@@ -42,6 +42,7 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 
 	templateCtx := kvstoreTemplateContext{
 		PackageName: string(file.GoPackageName),
+		GenVersion:  version,
 		Pairs:       map[string]storagePair{},
 	}
 

@@ -29,6 +29,7 @@ var funcs = template.FuncMap{
 
 type kvstoreTemplateContext struct {
 	PackageName string
+	GenVersion  string
 
 	Pairs map[string]storagePair
 }
