@@ -166,7 +166,7 @@ func (s *onlineSessionsStorage) Incr(ctx context.Context,
 
 func (msg *OnlineSessionsKey) marshal() (string, error) {
 
-	v := fmt.Sprintf("online-sessions:counter")
+	v := fmt.Sprintf("online-sessions:online-sessions")
 
 	return v, nil
 }
@@ -466,7 +466,7 @@ func (s *staticStorage) Del(ctx context.Context, key *StaticKey) error {
 
 func (msg *StaticKey) marshal() (string, error) {
 
-	v := fmt.Sprintf("static:feature_x_enabled")
+	v := fmt.Sprintf("static:static")
 
 	return v, nil
 }

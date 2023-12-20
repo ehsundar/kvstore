@@ -9,9 +9,7 @@ import "protobuf/kvstore/options.proto";
 
 
 message StaticKey {
-  option (kvstore.key_options) = {
-    static_key: {key: "feature_x_enabled"}
-  };
+  option (kvstore.key_options) = {};
 }
 
 message StaticValue {
@@ -46,19 +44,11 @@ message RateLimitCount {
 }
 
 message OnlineSessionsKey {
-  option (kvstore.key_options) = {
-    name: "online-sessions"
-    static_key: {
-      key: "counter"
-    }
-  };
+  option (kvstore.key_options) = {};
 }
 
 message OnlineSessionsValue {
-  option (kvstore.value_options) = {
-    name: "online-sessions"
-    numeral: {}
-  };
+  option (kvstore.value_options) = {};
 
   int64 count = 1;
 }
