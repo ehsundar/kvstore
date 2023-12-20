@@ -30,7 +30,12 @@ func ExtractPairs(msgs []*protogen.Message) (map[string]KVStorePair, error) {
 	for _, msg := range msgs {
 		ko := ExtractKeyOptions(msg)
 		if ko != nil {
-			log.Infof("parsed key option for %s", ko.Name)
+			log.Infof("parsed key option for %s", msg.Desc.Name())
+
+			if ko.Name == "" {
+				ko.Name = extractKeyName(string(msg.Desc.Name()))
+			}
+
 			km[ko.Name] = ko
 			kmsg[ko.Name] = msg.Desc
 			continue
@@ -38,7 +43,12 @@ func ExtractPairs(msgs []*protogen.Message) (map[string]KVStorePair, error) {
 
 		vo := ExtractValueOptions(msg)
 		if vo != nil {
-			log.Infof("parsed value option for %s", vo.Name)
+			log.Infof("parsed value option for %s", msg.Desc.Name())
+
+			if vo.Name == "" {
+				vo.Name = extractValueName(string(msg.Desc.Name()))
+			}
+
 			vm[vo.Name] = vo
 			vmsg[vo.Name] = msg.Desc
 			continue
@@ -49,7 +59,7 @@ func ExtractPairs(msgs []*protogen.Message) (map[string]KVStorePair, error) {
 		return nil, ErrKeyOptionsDoNotMatchValueOptions
 	}
 
-	for name, _ := range km {
+	for name := range km {
 		_, ok := vm[name]
 		if !ok {
 			return nil, ErrKeyOptionsDoNotMatchValueOptions

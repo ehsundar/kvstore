@@ -25,12 +25,12 @@ func main() {
 		panic(err)
 	}
 
-	featureX := example.NewFeatureXStore(r)
+	featureX := example.NewStaticStore(r)
 
-	_, err = featureX.Set(ctx, &example.StaticKey{}, &example.ValueForStaticKey{
+	_, err = featureX.Set(ctx, &example.StaticKey{}, &example.StaticValue{
 		Value:  true,
 		Phones: []string{"123", "456"},
-		Items: &example.ValueForStaticKey_NestedItems{
+		Items: &example.StaticValue_NestedItems{
 			Items: []int32{1, 2, 3},
 		},
 	},

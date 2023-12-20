@@ -13,156 +13,6 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-// generated code for FeatureX
-// storage interface
-
-type FeatureXKVStore interface {
-	Get(context.Context, *StaticKey, ...kvstore.GetOption) (*ValueForStaticKey, error)
-	Set(context.Context, *StaticKey,
-		*ValueForStaticKey, ...kvstore.SetOption) (*ValueForStaticKey, error)
-	Del(context.Context, *StaticKey) error
-}
-
-// storage construction
-
-func NewFeatureXStore(r redis.Cmdable, opts ...kvstore.InitOption) FeatureXKVStore {
-
-	oc := kvstore.InitOptionContext{}
-	for _, opt := range opts {
-		opt(&oc)
-	}
-
-	return &featureXStorage{
-		r:    r,
-		opts: oc,
-	}
-}
-
-// storage implementation
-
-type featureXStorage struct {
-	r    redis.Cmdable
-	opts kvstore.InitOptionContext
-}
-
-func (s *featureXStorage) Get(
-	ctx context.Context, key *StaticKey, opts ...kvstore.GetOption) (*ValueForStaticKey, error) {
-
-	var err error
-
-	o := kvstore.GetOptionContext{}
-	for _, opt := range opts {
-		opt(&o)
-	}
-
-	k, err := key.marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	var v string
-	switch {
-	case o.Del:
-		v, err = s.r.GetDel(ctx, k).Result()
-	case o.TTL != 0:
-		v, err = s.r.GetEx(ctx, k, o.TTL).Result()
-	case !o.ExAt.IsZero():
-		// TODO: PR to go-redis for exAt
-		err = errors.New("exat is not supported by go-redis")
-	default:
-		v, err = s.r.Get(ctx, k).Result()
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	msg := &ValueForStaticKey{}
-	err = msg.unmarshal(v)
-	if err != nil {
-		return nil, err
-	}
-
-	return msg, nil
-}
-
-func (s *featureXStorage) Set(ctx context.Context, key *StaticKey,
-	value *ValueForStaticKey, opts ...kvstore.SetOption) (*ValueForStaticKey, error) {
-
-	o := kvstore.SetOptionContext{
-		Get:     true,
-		KeepTTL: true,
-	}
-	for _, opt := range opts {
-		opt(&o)
-	}
-
-	k, err := key.marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	mv, err := value.marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	v, err := s.r.SetArgs(ctx, k, mv, redis.SetArgs{
-		Mode:     o.Mode,
-		TTL:      o.TTL,
-		ExpireAt: o.ExAt,
-		Get:      o.Get,
-		KeepTTL:  o.KeepTTL,
-	}).Result()
-	if err != nil && !errors.Is(err, redis.Nil) {
-		return nil, err
-	}
-
-	if v != "" {
-		msg := &ValueForStaticKey{}
-		err = msg.unmarshal(v)
-		if err != nil {
-			return nil, err
-		}
-		return msg, nil
-	}
-
-	return nil, nil
-}
-
-func (s *featureXStorage) Del(ctx context.Context, key *StaticKey) error {
-
-	k, err := key.marshal()
-	if err != nil {
-		return err
-	}
-
-	_, err = s.r.Del(ctx, k).Result()
-	return err
-}
-
-// message marshallers
-
-func (msg *StaticKey) marshal() (string, error) {
-
-	v := fmt.Sprintf("feature-x:feature_x_enabled")
-
-	return v, nil
-}
-
-func (msg *ValueForStaticKey) marshal() (string, error) {
-	v, err := protojson.MarshalOptions{}.Marshal(msg)
-	if err != nil {
-		return "", err
-	}
-
-	return string(v), nil
-}
-
-func (msg *ValueForStaticKey) unmarshal(value string) error {
-	return protojson.UnmarshalOptions{}.Unmarshal([]byte(value), msg)
-}
-
 // generated code for OnlineSessions
 // storage interface
 
@@ -481,5 +331,155 @@ func (msg *RateLimitCount) marshal() (string, error) {
 }
 
 func (msg *RateLimitCount) unmarshal(value string) error {
+	return protojson.UnmarshalOptions{}.Unmarshal([]byte(value), msg)
+}
+
+// generated code for Static
+// storage interface
+
+type StaticKVStore interface {
+	Get(context.Context, *StaticKey, ...kvstore.GetOption) (*StaticValue, error)
+	Set(context.Context, *StaticKey,
+		*StaticValue, ...kvstore.SetOption) (*StaticValue, error)
+	Del(context.Context, *StaticKey) error
+}
+
+// storage construction
+
+func NewStaticStore(r redis.Cmdable, opts ...kvstore.InitOption) StaticKVStore {
+
+	oc := kvstore.InitOptionContext{}
+	for _, opt := range opts {
+		opt(&oc)
+	}
+
+	return &staticStorage{
+		r:    r,
+		opts: oc,
+	}
+}
+
+// storage implementation
+
+type staticStorage struct {
+	r    redis.Cmdable
+	opts kvstore.InitOptionContext
+}
+
+func (s *staticStorage) Get(
+	ctx context.Context, key *StaticKey, opts ...kvstore.GetOption) (*StaticValue, error) {
+
+	var err error
+
+	o := kvstore.GetOptionContext{}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	k, err := key.marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var v string
+	switch {
+	case o.Del:
+		v, err = s.r.GetDel(ctx, k).Result()
+	case o.TTL != 0:
+		v, err = s.r.GetEx(ctx, k, o.TTL).Result()
+	case !o.ExAt.IsZero():
+		// TODO: PR to go-redis for exAt
+		err = errors.New("exat is not supported by go-redis")
+	default:
+		v, err = s.r.Get(ctx, k).Result()
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	msg := &StaticValue{}
+	err = msg.unmarshal(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return msg, nil
+}
+
+func (s *staticStorage) Set(ctx context.Context, key *StaticKey,
+	value *StaticValue, opts ...kvstore.SetOption) (*StaticValue, error) {
+
+	o := kvstore.SetOptionContext{
+		Get:     true,
+		KeepTTL: true,
+	}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	k, err := key.marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	mv, err := value.marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	v, err := s.r.SetArgs(ctx, k, mv, redis.SetArgs{
+		Mode:     o.Mode,
+		TTL:      o.TTL,
+		ExpireAt: o.ExAt,
+		Get:      o.Get,
+		KeepTTL:  o.KeepTTL,
+	}).Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return nil, err
+	}
+
+	if v != "" {
+		msg := &StaticValue{}
+		err = msg.unmarshal(v)
+		if err != nil {
+			return nil, err
+		}
+		return msg, nil
+	}
+
+	return nil, nil
+}
+
+func (s *staticStorage) Del(ctx context.Context, key *StaticKey) error {
+
+	k, err := key.marshal()
+	if err != nil {
+		return err
+	}
+
+	_, err = s.r.Del(ctx, k).Result()
+	return err
+}
+
+// message marshallers
+
+func (msg *StaticKey) marshal() (string, error) {
+
+	v := fmt.Sprintf("static:feature_x_enabled")
+
+	return v, nil
+}
+
+func (msg *StaticValue) marshal() (string, error) {
+	v, err := protojson.MarshalOptions{}.Marshal(msg)
+	if err != nil {
+		return "", err
+	}
+
+	return string(v), nil
+}
+
+func (msg *StaticValue) unmarshal(value string) error {
 	return protojson.UnmarshalOptions{}.Unmarshal([]byte(value), msg)
 }

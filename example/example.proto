@@ -10,15 +10,12 @@ import "protobuf/kvstore/options.proto";
 
 message StaticKey {
   option (kvstore.key_options) = {
-    name: "feature-x"
     static_key: {key: "feature_x_enabled"}
   };
 }
 
-message ValueForStaticKey {
-  option (kvstore.value_options) = {
-    name: "feature-x"
-  };
+message StaticValue {
+  option (kvstore.value_options) = {};
 
   bool value = 1;
   repeated string phones = 2;
