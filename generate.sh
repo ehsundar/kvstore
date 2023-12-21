@@ -13,4 +13,4 @@ protoc \
   --go_out=. --go_opt=paths=source_relative \
   --go-kvstore_out=. --go-kvstore_opt=paths=source_relative \
   -I. \
-  example/example.proto
+  examples/example.proto

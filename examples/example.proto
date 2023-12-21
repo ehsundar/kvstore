@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package example;
 
-option go_package = "github.com/ehsundar/kvstore/example";
+option go_package = "github.com/ehsundar/kvstore/examples";
 
 import "google/protobuf/descriptor.proto";
 import "protobuf/kvstore/options.proto";

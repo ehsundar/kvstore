@@ -2,15 +2,14 @@ package optparse
 
 import (
 	"errors"
+
 	kvstoreProto "github.com/ehsundar/kvstore/protobuf/kvstore"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-var (
-	ErrKeyOptionsDoNotMatchValueOptions = errors.New("key and value options does not match")
-)
+var ErrKeyOptionsDoNotMatchValueOptions = errors.New("key and value options does not match")
 
 type KVStorePair struct {
 	KeyOptions *kvstoreProto.KVStoreKeyOptions
@@ -36,6 +35,7 @@ func ExtractPairs(msgs []*protogen.Message) (map[string]KVStorePair, error) {
 
 			km[ko.Name] = ko
 			kmsg[ko.Name] = msg.Desc
+
 			continue
 		}
 
@@ -47,6 +47,7 @@ func ExtractPairs(msgs []*protogen.Message) (map[string]KVStorePair, error) {
 
 			vm[vo.Name] = vo
 			vmsg[vo.Name] = msg.Desc
+
 			continue
 		}
 	}

@@ -2,12 +2,13 @@ package main
 
 import (
 	"flag"
-	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/generators"
-	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/version"
 	"os"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/compiler/protogen"
+
+	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/generators"
+	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/version"
 )
 
 func main() {
@@ -17,6 +18,7 @@ func main() {
 	if len(os.Args) > 1 {
 		flag.BoolFunc("version", "print protoc-gen-go-kvstore version", version.PrintVersion)
 		flag.Parse()
+
 		return
 	}
 
@@ -27,6 +29,7 @@ func main() {
 			}
 			generators.GenerateFile(gen, f)
 		}
+
 		return nil
 	})
 }

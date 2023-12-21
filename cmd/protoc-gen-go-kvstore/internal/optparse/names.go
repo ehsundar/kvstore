@@ -20,9 +20,11 @@ var valueSuffixes = []string{
 
 func extractKeyName(name string) string {
 	sfx := ""
+
 	for _, s := range keySuffixes {
 		if strings.HasSuffix(name, s) {
 			sfx = s
+
 			break
 		}
 	}
@@ -32,9 +34,11 @@ func extractKeyName(name string) string {
 
 func extractValueName(name string) string {
 	sfx := ""
+
 	for _, s := range valueSuffixes {
 		if strings.HasSuffix(name, s) {
 			sfx = s
+
 			break
 		}
 	}

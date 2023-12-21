@@ -2,10 +2,12 @@ package kvstore
 
 import "time"
 
-type InitOption func(o *InitOptionContext)
-type GetOption func(o *GetOptionContext)
-type SetOption func(o *SetOptionContext)
-type IncrOption func(o *IncrOptionContext)
+type (
+	InitOption func(o *InitOptionContext)
+	GetOption  func(o *GetOptionContext)
+	SetOption  func(o *SetOptionContext)
+	IncrOption func(o *IncrOptionContext)
+)
 
 type InitOptionContext struct{}
 
