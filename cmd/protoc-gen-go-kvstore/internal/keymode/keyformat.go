@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	kvstoreProto "github.com/ehsundar/kvstore/protobuf/kvstore"
 	"github.com/iancoleman/strcase"
 	"github.com/samber/lo"
 	"google.golang.org/protobuf/reflect/protoreflect"
-
-	kvstoreProto "github.com/ehsundar/kvstore/protobuf/kvstore"
 )
 
 func GetKeyFormat(o *kvstoreProto.KVStoreKeyOptions, d protoreflect.MessageDescriptor) (KeyFormat, error) {
@@ -31,6 +30,7 @@ func GetKeyFormat(o *kvstoreProto.KVStoreKeyOptions, d protoreflect.MessageDescr
 		f := strings.Join(lo.Times(len(vars), func(_ int) string {
 			return "%v"
 		}), ":")
+
 		return KeyFormat{
 			Format:   fmt.Sprintf("%s:%s", o.Name, f),
 			VarNames: vars,
@@ -44,6 +44,7 @@ func validateStaticKey(k string) error {
 	if len(k) == 0 {
 		return ErrInvalidStaticKey
 	}
+
 	return nil
 }
 

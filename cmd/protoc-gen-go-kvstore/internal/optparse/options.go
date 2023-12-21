@@ -46,7 +46,6 @@ func inferValueOptions(o *kvstore.KVStoreValueOptions, msg *protogen.Message) {
 			protoreflect.Sint32Kind, protoreflect.Sint64Kind,
 			protoreflect.Fixed32Kind, protoreflect.Fixed64Kind,
 			protoreflect.Sfixed32Kind, protoreflect.Sfixed64Kind:
-
 			o.Mode = &kvstore.KVStoreValueOptions_Numeral{
 				Numeral: &kvstore.KVStoreValueOptions_NumeralValueMode{},
 			}

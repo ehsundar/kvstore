@@ -13,8 +13,8 @@ func setupLogger() {
 		logFile = "/dev/null"
 	}
 
-	// open a file
-	f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	//nolint:gomnd
+	f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
 	if err != nil {
 		fmt.Printf("error opening file: %v", err)
 	}

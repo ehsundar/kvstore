@@ -2,6 +2,7 @@ package valuemode
 
 import (
 	"errors"
+
 	"github.com/ehsundar/kvstore/protobuf/kvstore"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -27,14 +28,15 @@ func GetValueMode(o *kvstore.KVStoreValueOptions, d protoreflect.MessageDescript
 		if d.Fields().Len() != 1 {
 			return 0, ErrMsgNoOneNumericField
 		}
+
 		f := d.Fields().Get(0)
+
 		switch f.Kind() {
 		case protoreflect.Int32Kind, protoreflect.Int64Kind,
 			protoreflect.Uint32Kind, protoreflect.Uint64Kind,
 			protoreflect.Sint32Kind, protoreflect.Sint64Kind,
 			protoreflect.Fixed32Kind, protoreflect.Fixed64Kind,
 			protoreflect.Sfixed32Kind, protoreflect.Sfixed64Kind:
-
 			return NumericInt, nil
 		case protoreflect.FloatKind, protoreflect.DoubleKind:
 			return NumericFloat, nil

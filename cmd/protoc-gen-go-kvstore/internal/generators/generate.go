@@ -16,14 +16,41 @@ import (
 )
 
 func GenerateFile(gen *protogen.Plugin, file *protogen.File) {
-
 	templateCtx := kvstoreTemplateContext{
 		PackageName: string(file.GoPackageName),
 		GenVersion:  version.Version,
-		Pairs:       map[string]storagePair{},
+		Pairs:       extractKeyValuePairs(file),
 	}
 
+	value, err := Render(templateCtx)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+
+		return
+	}
+
+	fmtValue, err := formatGoCode([]byte(value))
+	if err != nil {
+		panic(err)
+	}
+
+	filename := file.GeneratedFilenamePrefix + "_kvstore.pb.go"
+	g := gen.NewGeneratedFile(filename, file.GoImportPath)
+	_, err = g.Write(fmtValue)
+
+	if err != nil {
+		fmt.Printf("%s\n", err)
+
+		return
+	}
+
+	return
+}
+
+func extractKeyValuePairs(file *protogen.File) map[string]storagePair {
+	templatePairs := make(map[string]storagePair)
 	pairs, err := optparse.ExtractPairs(file.Messages)
+
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +71,7 @@ func GenerateFile(gen *protogen.Plugin, file *protogen.File) {
 			valueKind = pair.ValueDesc.Fields().Get(0).Kind()
 		}
 
-		templateCtx.Pairs[name] = storagePair{
+		templatePairs[name] = storagePair{
 			CodeSafeName: strcase.ToCamel(name),
 			KeySpecs: keySpecs{
 				Opts:        pair.KeyOptions,
@@ -61,26 +88,7 @@ func GenerateFile(gen *protogen.Plugin, file *protogen.File) {
 		}
 	}
 
-	value, err := Render(templateCtx)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		return
-	}
-
-	fmtValue, err := formatGoCode([]byte(value))
-	if err != nil {
-		panic(err)
-	}
-
-	filename := file.GeneratedFilenamePrefix + "_kvstore.pb.go"
-	g := gen.NewGeneratedFile(filename, file.GoImportPath)
-	_, err = g.Write(fmtValue)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		return
-	}
-
-	return
+	return templatePairs
 }
 
 func protoKindToGoType(k protoreflect.Kind) string {
@@ -98,19 +106,22 @@ func protoKindToGoType(k protoreflect.Kind) string {
 	case protoreflect.Uint64Kind:
 		return "uint64"
 	default:
+		//nolint:godox
 		// TODO: Handle all proto types
 		return ""
 	}
 }
 
 func formatGoCode(code []byte) ([]byte, error) {
-	formatted, err := format.Source([]byte(code))
+	formatted, err := format.Source(code)
 	if err != nil {
 		return []byte{}, err
 	}
 
+	//nolint:gomnd
 	options := &imports.Options{Comments: true, TabIndent: true, TabWidth: 8}
 	formatted, err = imports.Process("", formatted, options)
+
 	if err != nil {
 		return []byte{}, err
 	}

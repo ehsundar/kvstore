@@ -19,10 +19,16 @@ var rawTemplate string
 
 var funcs = template.FuncMap{
 	"funcCallArgs": func(varName string, v interface{}) string {
-		vv := v.([]string)
+		vv, ok := v.([]string)
+
+		if !ok {
+			return ""
+		}
+
 		vv = lo.Map(vv, func(item string, _ int) string {
 			return fmt.Sprintf("%s.%s", varName, item)
 		})
+
 		return strings.Join(vv, ", ")
 	},
 }
@@ -65,6 +71,7 @@ func Render(templateContext kvstoreTemplateContext) (string, error) {
 
 	builder := &bytes.Buffer{}
 	err := tmpl.Execute(builder, templateContext)
+
 	if err != nil {
 		return "", err
 	}

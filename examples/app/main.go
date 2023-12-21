@@ -8,7 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/ehsundar/kvstore"
-	"github.com/ehsundar/kvstore/example"
+	"github.com/ehsundar/kvstore/examples"
 )
 
 func main() {
@@ -25,12 +25,12 @@ func main() {
 		panic(err)
 	}
 
-	featureX := example.NewStaticStore(r)
+	featureX := examples.NewStaticStore(r)
 
-	_, err = featureX.Set(ctx, &example.StaticKey{}, &example.StaticValue{
+	_, err = featureX.Set(ctx, &examples.StaticKey{}, &examples.StaticValue{
 		Value:  true,
 		Phones: []string{"123", "456"},
-		Items: &example.StaticValue_NestedItems{
+		Items: &examples.StaticValue_NestedItems{
 			Items: []int32{1, 2, 3},
 		},
 	},
@@ -40,25 +40,25 @@ func main() {
 		panic(err)
 	}
 
-	v, err := featureX.Get(ctx, &example.StaticKey{})
+	v, err := featureX.Get(ctx, &examples.StaticKey{})
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Printf("%+v\n", v)
 
-	if err := featureX.Del(ctx, &example.StaticKey{}); err != nil {
+	if err := featureX.Del(ctx, &examples.StaticKey{}); err != nil {
 		panic(err)
 	}
 
-	rateLimit := example.NewRateLimitStore(r)
+	rateLimit := examples.NewRateLimitStore(r)
 
-	_, err = rateLimit.Set(ctx, &example.DynamicKey{
+	_, err = rateLimit.Set(ctx, &examples.DynamicKey{
 		RpcName:  "GetUser",
 		CallerId: "caller-one",
 		// every ten seconds is a separate bucket
 		Bucket: 1702411920,
-	}, &example.RateLimitCount{
+	}, &examples.RateLimitCount{
 		Count: 10,
 		Limit: 100,
 	},
@@ -68,7 +68,7 @@ func main() {
 		panic(err)
 	}
 
-	rateLimitValue, err := rateLimit.Get(ctx, &example.DynamicKey{
+	rateLimitValue, err := rateLimit.Get(ctx, &examples.DynamicKey{
 		RpcName:  "GetUser",
 		CallerId: "caller-one",
 		Bucket:   1702411920,
@@ -79,10 +79,11 @@ func main() {
 
 	fmt.Printf("%d/%d\n", rateLimitValue.Count, rateLimitValue.Limit)
 
-	sessions := example.NewOnlineSessionsStore(r)
-	current, err := sessions.Incr(ctx, &example.OnlineSessionsKey{}, 2,
+	sessions := examples.NewOnlineSessionsStore(r)
+	current, err := sessions.Incr(ctx, &examples.OnlineSessionsKey{}, 2,
 		kvstore.WithIncrTTL(10*time.Second, true),
 	)
+
 	if err != nil {
 		panic(err)
 	}
