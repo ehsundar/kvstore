@@ -22,6 +22,10 @@ func GenerateFile(gen *protogen.Plugin, file *protogen.File) {
 		Pairs:       extractKeyValuePairs(file),
 	}
 
+	if len(templateCtx.Pairs) == 0 {
+		return
+	}
+
 	value, err := Render(templateCtx)
 	if err != nil {
 		fmt.Printf("%s\n", err)
