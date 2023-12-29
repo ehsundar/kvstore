@@ -24,6 +24,8 @@ builds:
       - darwin
     main: "./cmd/protoc-gen-go-kvstore"
     binary: protoc-gen-go-kvstore
+    ldflags:
+      - -s -w -X github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal.Version={{.Version}} -X github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal.Commit={{.Commit}} -X github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal.Date={{.Date}}
 
 archives:
   - format: zip

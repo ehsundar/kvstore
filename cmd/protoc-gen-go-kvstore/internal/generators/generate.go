@@ -9,16 +9,16 @@ import (
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal"
 	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/keymode"
 	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/optparse"
 	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/valuemode"
-	"github.com/ehsundar/kvstore/cmd/protoc-gen-go-kvstore/internal/version"
 )
 
 func GenerateFile(gen *protogen.Plugin, file *protogen.File) {
 	templateCtx := kvstoreTemplateContext{
 		PackageName: string(file.GoPackageName),
-		GenVersion:  version.Version,
+		GenVersion:  internal.Version,
 		Pairs:       extractKeyValuePairs(file),
 	}
 
