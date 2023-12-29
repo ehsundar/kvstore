@@ -8,10 +8,16 @@ protoc \
 
 go build -o protoc-gen-go-kvstore "$(pwd)/cmd/protoc-gen-go-kvstore"
 
-protoc \
-  --plugin=protoc-gen-go-kvstore=./protoc-gen-go-kvstore \
-  --go_out=. --go_opt=paths=source_relative \
-  --go-kvstore_out=. --go-kvstore_opt=paths=source_relative \
-  -I. \
-  -I./protobuf \
-  examples/example.proto
+proto_files=$(find . -type f -name "*.proto")
+
+for file in $proto_files; do
+  echo "running protoc against $file"
+
+  protoc \
+    --plugin=protoc-gen-go-kvstore=./protoc-gen-go-kvstore \
+    --go_out=. --go_opt=paths=source_relative \
+    --go-kvstore_out=. --go-kvstore_opt=paths=source_relative \
+    -I. \
+    -I./protobuf \
+    $file
+done

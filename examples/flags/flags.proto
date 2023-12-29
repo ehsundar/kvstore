@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package flags;
+
+option go_package = "github.com/ehsundar/kvstore/examples/flags";
+
+import "kvstore/options.proto";
+
+message FlagKey {
+  option (kvstore.key_options) = {};
+}
+
+message FlagValue {
+  option (kvstore.value_options) = {};
+
+  string endpoint = 1;
+  int32 experiment_percent = 2;
+}
