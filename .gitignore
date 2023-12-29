@@ -22,3 +22,5 @@ go.work
 
 /protoc-gen-go-kvstore
 *.log
+
+dist/
