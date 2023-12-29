@@ -9,6 +9,8 @@ import (
 var keySuffixes = []string{
 	"key",
 	"Key",
+	"Request",
+	"Req",
 }
 
 var valueSuffixes = []string{
@@ -16,6 +18,8 @@ var valueSuffixes = []string{
 	"Val",
 	"value",
 	"Value",
+	"Response",
+	"Resp",
 }
 
 func extractKeyName(name string) string {

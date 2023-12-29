@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package views;
+
+option go_package = "github.com/ehsundar/kvstore/examples/views";
+
+import "kvstore/options.proto";
+
+message GetItemsRequest {
+  option (kvstore.key_options) = {
+    // can be omitted, could be inferred
+    dynamic_key: {},
+  };
+
+  int64 view_id = 1;
+  repeated string filters = 2;
+}
+
+message GetItemsResponse {
+  option (kvstore.value_options) = {
+    // can be omitted, would be inferred
+    general: {},
+  };
+
+  string title = 1;
+  repeated Item items = 2;
+}
+
+message Item {
+  int64 id = 1;
+  bool visible = 2;
+  string display = 3;
+}
