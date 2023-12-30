@@ -118,7 +118,7 @@ func (s *dummyStorage) Set(ctx context.Context, key *DummyKey,
 		return nil, err
 	}
 
-	if v != "" {
+	if v != "" && v != "OK" {
 		msg := &DummyValue{}
 		err = msg.unmarshal(v)
 		if err != nil {
@@ -260,7 +260,7 @@ func (s *rateLimitStorage) Set(ctx context.Context, key *CallInfo,
 		return 0, err
 	}
 
-	if v != "" {
+	if v != "" && v != "OK" {
 
 		return strconv.ParseInt(v, 10, 64)
 

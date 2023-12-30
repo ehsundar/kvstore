@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package balance;
+
+option go_package = "github.com/ehsundar/kvstore/examples/balance";
+
+import "kvstore/options.proto";
+
+message BalanceKey {
+  option (kvstore.key_options) = {};
+
+  string username = 1;
+}
+
+message BalanceValue {
+  option (kvstore.value_options) = {
+    numeral: {}
+  };
+
+  double balance = 1;
+}

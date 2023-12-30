@@ -117,7 +117,7 @@ func (s *getItemsStorage) Set(ctx context.Context, key *GetItemsRequest,
 		return nil, err
 	}
 
-	if v != "" {
+	if v != "" && v != "OK" {
 		msg := &GetItemsResponse{}
 		err = msg.unmarshal(v)
 		if err != nil {

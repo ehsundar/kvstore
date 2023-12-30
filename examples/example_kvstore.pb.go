@@ -110,7 +110,7 @@ func (s *onlineSessionsStorage) Set(ctx context.Context, key *OnlineSessionsKey,
 		return 0, err
 	}
 
-	if v != "" {
+	if v != "" && v != "OK" {
 
 		return strconv.ParseInt(v, 10, 64)
 
@@ -289,7 +289,7 @@ func (s *rateLimitStorage) Set(ctx context.Context, key *DynamicKey,
 		return nil, err
 	}
 
-	if v != "" {
+	if v != "" && v != "OK" {
 		msg := &RateLimitCount{}
 		err = msg.unmarshal(v)
 		if err != nil {
@@ -439,7 +439,7 @@ func (s *staticStorage) Set(ctx context.Context, key *StaticKey,
 		return nil, err
 	}
 
-	if v != "" {
+	if v != "" && v != "OK" {
 		msg := &StaticValue{}
 		err = msg.unmarshal(v)
 		if err != nil {

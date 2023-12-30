@@ -117,7 +117,7 @@ func (s *flagStorage) Set(ctx context.Context, key *FlagKey,
 		return nil, err
 	}
 
-	if v != "" {
+	if v != "" && v != "OK" {
 		msg := &FlagValue{}
 		err = msg.unmarshal(v)
 		if err != nil {

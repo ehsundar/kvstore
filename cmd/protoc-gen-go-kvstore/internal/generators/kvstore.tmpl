@@ -170,7 +170,7 @@ func (s *{{$codeSafeName|untitle}}Storage) Set(ctx context.Context, key *{{$pair
 		return 0, err
 	}
 
-	if v != "" {
+	if v != "" && v != "OK" {
 		{{if $pairSpecs.ValueSpecs.NumericInt}}
 		return strconv.ParseInt(v, 10, 64)
 		{{else}}
@@ -213,7 +213,7 @@ func (s *{{$codeSafeName|untitle}}Storage) Set(ctx context.Context, key *{{$pair
 		return nil, err
 	}
 
-	if v != "" {
+	if v != "" && v != "OK" {
 		msg := &{{$pairSpecs.ValueSpecs.MessageName}}{}
 		err = msg.unmarshal(v)
 		if err != nil {

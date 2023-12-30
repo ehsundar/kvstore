@@ -46,7 +46,7 @@ func (s *ViewsTestSuite) TestShouldReadWriteToStorageRespectingTTL() {
 
 	key := &views.GetItemsRequest{
 		ViewId:  12,
-		Filters: []string{},
+		Filters: []string{"some", "filters"},
 	}
 
 	_, err := storage.Set(ctx, key, &views.GetItemsResponse{
@@ -63,7 +63,7 @@ func (s *ViewsTestSuite) TestShouldReadWriteToStorageRespectingTTL() {
 				Display: "display 2",
 			},
 		},
-	}, kvstore.WithSetTTL(100*time.Millisecond))
+	}, kvstore.WithSetTTL(100*time.Second))
 	s.Nil(err)
 
 	value, err := storage.Get(ctx, key, kvstore.WithGetTTL(time.Millisecond))
@@ -73,7 +73,7 @@ func (s *ViewsTestSuite) TestShouldReadWriteToStorageRespectingTTL() {
 	s.Equal(2, len(value.Items))
 	s.Equal("display 1", value.Items[0].Display)
 
-	time.Sleep(time.Millisecond)
+	time.Sleep(3 * time.Millisecond)
 
 	_, err = storage.Get(ctx, key)
 	s.ErrorIs(err, redis.Nil)

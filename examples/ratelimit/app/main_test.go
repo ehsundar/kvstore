@@ -40,7 +40,7 @@ func (s *RateLimitTestSuite) TearDownTest() {
 	s.Nil(err)
 }
 
-func (s *RateLimitTestSuite) TestShouldReadWriteToStorage() {
+func (s *RateLimitTestSuite) TestShouldReadWriteToStorageRespectingTTL() {
 	ctx := context.Background()
 	storage := ratelimit.NewRateLimitStore(s.r)
 
